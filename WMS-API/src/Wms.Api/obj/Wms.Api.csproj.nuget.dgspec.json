@@ -1,0 +1,375 @@
+{
+  "format": 1,
+  "restore": {
+    "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Api/Wms.Api.csproj": {}
+  },
+  "projects": {
+    "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Api/Wms.Api.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Api/Wms.Api.csproj",
+        "projectName": "Wms.Api",
+        "projectPath": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Api/Wms.Api.csproj",
+        "packagesPath": "/home/alex/.nuget/packages/",
+        "outputPath": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Api/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/alex/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Application/Wms.Application.csproj": {
+                "projectPath": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Application/Wms.Application.csproj"
+              },
+              "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Common/Wms.Common.csproj": {
+                "projectPath": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Common/Wms.Common.csproj"
+              },
+              "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Contracts/Wms.Contracts.csproj": {
+                "projectPath": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Contracts/Wms.Contracts.csproj"
+              },
+              "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Infrastructure/Wms.Infrastructure.csproj": {
+                "projectPath": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Infrastructure/Wms.Infrastructure.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "Microsoft.AspNetCore.OpenApi": {
+              "target": "Package",
+              "version": "[8.0.22, )"
+            },
+            "StyleCop.Analyzers": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[1.1.118, )"
+            },
+            "Swashbuckle.AspNetCore": {
+              "target": "Package",
+              "version": "[6.6.2, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/8.0.122/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Application/Wms.Application.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Application/Wms.Application.csproj",
+        "projectName": "Wms.Application",
+        "projectPath": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Application/Wms.Application.csproj",
+        "packagesPath": "/home/alex/.nuget/packages/",
+        "outputPath": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Application/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/alex/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Common/Wms.Common.csproj": {
+                "projectPath": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Common/Wms.Common.csproj"
+              },
+              "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Contracts/Wms.Contracts.csproj": {
+                "projectPath": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Contracts/Wms.Contracts.csproj"
+              },
+              "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Domain/Wms.Domain.csproj": {
+                "projectPath": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Domain/Wms.Domain.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/8.0.122/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Common/Wms.Common.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Common/Wms.Common.csproj",
+        "projectName": "Wms.Common",
+        "projectPath": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Common/Wms.Common.csproj",
+        "packagesPath": "/home/alex/.nuget/packages/",
+        "outputPath": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Common/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/alex/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/8.0.122/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Contracts/Wms.Contracts.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Contracts/Wms.Contracts.csproj",
+        "projectName": "Wms.Contracts",
+        "projectPath": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Contracts/Wms.Contracts.csproj",
+        "packagesPath": "/home/alex/.nuget/packages/",
+        "outputPath": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Contracts/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/alex/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/8.0.122/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Domain/Wms.Domain.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Domain/Wms.Domain.csproj",
+        "projectName": "Wms.Domain",
+        "projectPath": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Domain/Wms.Domain.csproj",
+        "packagesPath": "/home/alex/.nuget/packages/",
+        "outputPath": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Domain/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/alex/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/8.0.122/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Infrastructure/Wms.Infrastructure.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Infrastructure/Wms.Infrastructure.csproj",
+        "projectName": "Wms.Infrastructure",
+        "projectPath": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Infrastructure/Wms.Infrastructure.csproj",
+        "packagesPath": "/home/alex/.nuget/packages/",
+        "outputPath": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Infrastructure/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/alex/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Application/Wms.Application.csproj": {
+                "projectPath": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Application/Wms.Application.csproj"
+              },
+              "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Common/Wms.Common.csproj": {
+                "projectPath": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Common/Wms.Common.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/8.0.122/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

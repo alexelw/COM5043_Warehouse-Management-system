@@ -1,0 +1,54 @@
+{
+  "name": "wms-frontend",
+  "version": "0.0.0",
+  "scripts": {
+    "start": "ng serve",
+    "build": "ng build",
+    "test:ci": "CI=true ng test --watch=false --code-coverage --browsers=ChromeHeadless",
+    "test": "ng test",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "lint": "ng lint"
+  },
+  "prettier": {
+    "printWidth": 100,
+    "singleQuote": true,
+    "overrides": [
+      {
+        "files": "*.html",
+        "options": {
+          "parser": "angular"
+        }
+      }
+    ]
+  },
+  "private": true,
+  "packageManager": "npm@10.9.0",
+  "dependencies": {
+    "@angular/common": "^21.1.0",
+    "@angular/compiler": "^21.1.0",
+    "@angular/core": "^21.1.0",
+    "@angular/forms": "^21.1.0",
+    "@angular/platform-browser": "^21.1.0",
+    "@angular/router": "^21.1.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^21.1.2",
+    "@angular/cli": "^21.1.2",
+    "@angular/compiler-cli": "^21.1.0",
+    "@types/jasmine": "~5.1.0",
+    "angular-eslint": "21.1.0",
+    "eslint": "^9.39.1",
+    "jasmine-core": "~5.13.0",
+    "karma": "~6.4.0",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+    "prettier": "^3.8.1",
+    "typescript": "~5.9.2",
+    "typescript-eslint": "8.47.0"
+  }
+}

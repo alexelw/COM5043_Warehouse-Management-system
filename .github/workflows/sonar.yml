@@ -1,0 +1,64 @@
+name: SonarCloud
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  sonar:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ---- Backend (.NET) ----
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Install SonarScanner for .NET
+        run: dotnet tool install --global dotnet-sonarscanner
+
+      - name: Restore .NET
+        run: dotnet restore WMS-API/Wms.sln
+
+      - name: Sonar Begin
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          dotnet-sonarscanner begin \
+            /k:"alexelw_COM5043_Warehouse-Management-system" \
+            /o:"alexelw" \
+            /d:sonar.host.url="https://sonarcloud.io"
+
+      - name: Build .NET
+        run: dotnet build WMS-API/Wms.sln --no-restore -c Release
+
+      - name: Test .NET
+        run: dotnet test WMS-API/Wms.sln --no-build -c Release
+
+      # ---- Frontend (Angular) ----
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: WMS-Frontend/package-lock.json
+
+      - name: Install frontend deps
+        working-directory: WMS-Frontend
+        run: npm ci
+
+      - name: Test frontend with coverage
+        working-directory: WMS-Frontend
+        run: npm run test:ci
+
+      - name: Sonar End
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: dotnet-sonarscanner end

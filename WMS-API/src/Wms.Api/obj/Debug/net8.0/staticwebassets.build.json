@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "YJgeTv6bFdOyg49VI51dtIAXRXkVwbWkPTzE0Pgbt8E=",
+  "Source": "Wms.Api",
+  "BasePath": "_content/Wms.Api",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}

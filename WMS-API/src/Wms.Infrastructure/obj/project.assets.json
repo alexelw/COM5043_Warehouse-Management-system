@@ -1,0 +1,143 @@
+{
+  "version": 3,
+  "targets": {
+    "net8.0": {
+      "Wms.Application/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v8.0",
+        "dependencies": {
+          "Wms.Common": "1.0.0",
+          "Wms.Contracts": "1.0.0",
+          "Wms.Domain": "1.0.0"
+        },
+        "compile": {
+          "bin/placeholder/Wms.Application.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/Wms.Application.dll": {}
+        }
+      },
+      "Wms.Common/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v8.0",
+        "compile": {
+          "bin/placeholder/Wms.Common.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/Wms.Common.dll": {}
+        }
+      },
+      "Wms.Contracts/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v8.0",
+        "compile": {
+          "bin/placeholder/Wms.Contracts.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/Wms.Contracts.dll": {}
+        }
+      },
+      "Wms.Domain/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v8.0",
+        "compile": {
+          "bin/placeholder/Wms.Domain.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/Wms.Domain.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "Wms.Application/1.0.0": {
+      "type": "project",
+      "path": "../Wms.Application/Wms.Application.csproj",
+      "msbuildProject": "../Wms.Application/Wms.Application.csproj"
+    },
+    "Wms.Common/1.0.0": {
+      "type": "project",
+      "path": "../Wms.Common/Wms.Common.csproj",
+      "msbuildProject": "../Wms.Common/Wms.Common.csproj"
+    },
+    "Wms.Contracts/1.0.0": {
+      "type": "project",
+      "path": "../Wms.Contracts/Wms.Contracts.csproj",
+      "msbuildProject": "../Wms.Contracts/Wms.Contracts.csproj"
+    },
+    "Wms.Domain/1.0.0": {
+      "type": "project",
+      "path": "../Wms.Domain/Wms.Domain.csproj",
+      "msbuildProject": "../Wms.Domain/Wms.Domain.csproj"
+    }
+  },
+  "projectFileDependencyGroups": {
+    "net8.0": [
+      "Wms.Application >= 1.0.0",
+      "Wms.Common >= 1.0.0"
+    ]
+  },
+  "packageFolders": {
+    "/home/alex/.nuget/packages/": {}
+  },
+  "project": {
+    "version": "1.0.0",
+    "restore": {
+      "projectUniqueName": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Infrastructure/Wms.Infrastructure.csproj",
+      "projectName": "Wms.Infrastructure",
+      "projectPath": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Infrastructure/Wms.Infrastructure.csproj",
+      "packagesPath": "/home/alex/.nuget/packages/",
+      "outputPath": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Infrastructure/obj/",
+      "projectStyle": "PackageReference",
+      "configFilePaths": [
+        "/home/alex/.nuget/NuGet/NuGet.Config"
+      ],
+      "originalTargetFrameworks": [
+        "net8.0"
+      ],
+      "sources": {
+        "https://api.nuget.org/v3/index.json": {}
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "projectReferences": {
+            "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Application/Wms.Application.csproj": {
+              "projectPath": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Application/Wms.Application.csproj"
+            },
+            "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Common/Wms.Common.csproj": {
+              "projectPath": "/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Common/Wms.Common.csproj"
+            }
+          }
+        }
+      },
+      "warningProperties": {
+        "warnAsError": [
+          "NU1605"
+        ]
+      }
+    },
+    "frameworks": {
+      "net8.0": {
+        "targetAlias": "net8.0",
+        "imports": [
+          "net461",
+          "net462",
+          "net47",
+          "net471",
+          "net472",
+          "net48",
+          "net481"
+        ],
+        "assetTargetFallback": true,
+        "warn": true,
+        "frameworkReferences": {
+          "Microsoft.NETCore.App": {
+            "privateAssets": "all"
+          }
+        },
+        "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/8.0.122/PortableRuntimeIdentifierGraph.json"
+      }
+    }
+  }
+}

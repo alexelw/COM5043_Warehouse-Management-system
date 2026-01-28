@@ -1,0 +1,29 @@
+# syntax=docker/dockerfile:1
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Copy solution + project files first (caches restore)
+COPY Wms.sln ./
+COPY src/Wms.Api/Wms.Api.csproj src/Wms.Api/
+COPY src/Wms.Domain/Wms.Domain.csproj src/Wms.Domain/
+COPY src/Wms.Application/Wms.Application.csproj src/Wms.Application/
+COPY src/Wms.Infrastructure/Wms.Infrastructure.csproj src/Wms.Infrastructure/
+COPY src/Wms.Contracts/Wms.Contracts.csproj src/Wms.Contracts/
+COPY src/Wms.Common/Wms.Common.csproj src/Wms.Common/
+
+COPY tests/Wms.Domain.Tests/Wms.Domain.Tests.csproj tests/Wms.Domain.Tests/
+COPY tests/Wms.Application.Tests/Wms.Application.Tests.csproj tests/Wms.Application.Tests/
+
+RUN dotnet restore
+
+
+# Copy everything else and publish
+COPY . .
+RUN dotnet publish src/Wms.Api/Wms.Api.csproj -c Release -o /app/publish /p:UseAppHost=false
+
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+WORKDIR /app
+EXPOSE 8080
+ENV ASPNETCORE_URLS=http://+:8080
+COPY --from=build /app/publish .
+ENTRYPOINT ["dotnet", "Wms.Api.dll"]
