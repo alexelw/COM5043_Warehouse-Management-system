@@ -42,3 +42,4 @@
 /home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Api/obj/Debug/net8.0/Wms.Api.pdb
 /home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Api/obj/Debug/net8.0/Wms.Api.genruntimeconfig.cache
 /home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Api/obj/Debug/net8.0/ref/Wms.Api.dll
+/home/alex/Desktop/Uni/level 5/Object Oriented Programming/Assignment/Code/COM5043_Warehouse-Management-system/WMS-API/src/Wms.Api/bin/Debug/net8.0/stylecomp.json
