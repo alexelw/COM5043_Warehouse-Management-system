@@ -14,7 +14,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.Run();
+await app.RunAsync();
+
 
 record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {

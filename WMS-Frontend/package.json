@@ -4,7 +4,7 @@
   "scripts": {
     "start": "ng serve",
     "build": "ng build",
-    "test:ci": "CI=true ng test --watch=false --code-coverage --browsers=ChromeHeadless",
+    "test:ci": "CI=true ng test --watch=false --coverage --browsers=ChromeHeadless",
     "test": "ng test",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
