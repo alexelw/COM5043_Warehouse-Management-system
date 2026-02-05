@@ -1,0 +1,18 @@
+@startuml
+title PurchaseOrder Status Lifecycle
+
+state "Partially Received" as PartiallyReceived
+
+[*] --> Pending : CreatePurchaseOrder
+
+Pending --> PartiallyReceived : ReceiveDelivery (partial)
+Pending --> Completed : ReceiveDelivery (full)
+Pending --> Cancelled : Cancel
+
+PartiallyReceived --> Completed : ReceiveDelivery (remaining)
+PartiallyReceived --> Cancelled : Cancel
+
+Completed --> [*]
+Cancelled --> [*]
+
+@enduml

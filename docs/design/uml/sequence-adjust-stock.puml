@@ -1,0 +1,39 @@
+@startuml
+title UC17 - Adjust Stock (Sequence)
+
+actor "Warehouse Staff" as Staff
+boundary "API Controller" as API
+control "InventoryService\n(Application)" as Inventory
+entity "Product" as Product
+entity "StockMovement" as SM
+control "FinanceService\n(Application)" as Finance
+entity "FinancialTransaction" as FT
+database "Repositories/DB" as DB
+
+Staff -> API : POST /products/{id}/adjust-stock (qty, reason)
+API -> Inventory : AdjustStock(productId, qty, reason)
+
+Inventory -> DB : Load Product(productId)
+DB --> Inventory : Product
+
+alt qty > 0
+  Inventory -> Product : IncreaseStock(qty)
+else qty < 0
+  Inventory -> Product : DecreaseStock(abs(qty))
+end
+
+Inventory -> SM : Create StockMovement(Adjustment, reason)
+Inventory -> DB : Save Product + StockMovement
+DB --> Inventory : ok
+
+opt Financial impact required
+  Inventory -> Finance : RecordAdjustmentImpact(productId, qty, reason)
+  Finance -> FT : Create FinancialTransaction(...)
+  Finance -> DB : Save FinancialTransaction(FT)
+  DB --> Finance : ok
+end
+
+Inventory --> API : 200 OK (updated stock)
+API --> Staff : Success response
+
+@enduml

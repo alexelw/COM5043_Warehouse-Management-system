@@ -1,0 +1,14 @@
+@startuml
+title CustomerOrder Status Lifecycle
+
+[*] --> Draft : CreateCustomerOrder
+
+Draft --> Confirmed : Confirm
+Draft --> Cancelled : Cancel
+
+Confirmed --> Cancelled : Cancel
+Confirmed --> [*] : Fulfill (out of scope)
+
+Cancelled --> [*]
+
+@enduml

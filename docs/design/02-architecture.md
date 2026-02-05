@@ -1,0 +1,181 @@
+# 02 — Architecture
+
+## 1. Architectural Approach
+
+The system is designed using a **layered architecture** to enforce separation of concerns and ensure the **user interface is decoupled from the business logic**. The architecture is documented using the **C4 model** (Context and Container diagrams) to present the system at multiple levels of abstraction. 
+
+At a high level, the system consists of:
+- **Angular SPA** (presentation/UI)
+- **C# Backend API** (presentation + application orchestration)
+- **Database** (persistence)
+
+The backend is structured into layers so that each layer has a clear responsibility and test boundary. This aligns with common .NET architecture guidance describing layered approaches (presentation/application/domain/infrastructure). 
+
+---
+
+## 2. C4 Diagrams (Context and Container)
+
+### 2.1 Context (C4 Level 1)
+The **System Context** diagram defines the system boundary and the users who interact with it:
+- **Warehouse Staff**: stock operations (deliveries and customer orders)
+- **Manager**: oversight (low stock monitoring, order history)
+- **Administrator**: finance reporting and export
+
+> Diagram source: `docs/design/uml/context.puml`  
+> Exported output: `docs/design/uml/context.png` (or `.svg`)
+
+### 2.2 Containers (C4 Level 2)
+The **Container** diagram shows the major runtime parts (“containers” in C4: applications/data stores, not Docker) and how they communicate:
+- Angular SPA calls the backend over HTTP
+- Backend reads/writes to the database
+- Backend produces exported report files (TXT/JSON) for offline sharing
+
+> Diagram source: `docs/design/uml/container.puml`  
+> Exported output: `docs/design/uml/container.png` (or `.svg`) 
+
+---
+
+## 3. Backend Layering and Responsibilities
+
+The backend uses four layers implemented as separate projects or namespaces:
+
+### 3.1 Presentation Layer (API)
+**Responsibility**
+- Accept requests from the UI
+- Validate request shape (required fields, types)
+- Map DTOs ⇄ domain objects
+- Return responses and errors in a consistent format
+
+**Key rule**
+- Must not contain business rules; it delegates to Application services.
+
+### 3.2 Application Layer (Use-Case Services)
+**Responsibility**
+- Implements the use-cases (UC01–UC17)
+- Coordinates workflows across multiple domain entities
+- Enforces process-level rules (e.g., “place order then record transaction”)
+
+**Examples**
+- `OrderService.CreateCustomerOrder(...)`
+- `PurchaseOrderService.ReceiveDelivery(...)`
+- `ReportingService.GenerateSalesSummary(...)`
+
+### 3.3 Domain Layer (Business Model)
+**Responsibility**
+- Core business rules and invariants
+- Entities (Supplier, Product, PurchaseOrder, CustomerOrder, Transaction)
+- Value Objects (Money, Quantity)
+- Domain behaviour (e.g., `DecreaseStock`, `ReceiveGoods`)
+
+**Key rule**
+- Domain layer has no dependency on web frameworks or databases.
+
+### 3.4 Infrastructure Layer (Persistence & External Concerns)
+**Responsibility**
+- Database access and implementation details
+- Repository implementations
+- File export implementation (TXT/JSON)
+
+This separation supports maintainability and testability (domain/application can be unit-tested without a database).
+
+---
+
+## 4. Domain vs DTO vs Persistence Models (Important)
+
+To avoid coupling, the system uses **three distinct model types**:
+
+### 4.1 Domain Model
+- Used internally for business logic (Domain layer)
+- Contains behaviour and validation rules
+
+### 4.2 API Models (DTOs)
+- Used at the frontend/backend boundary (Presentation/Application)
+- Designed for data transfer (no business logic)
+- Provides stable contracts to the Angular UI
+
+### 4.3 Persistence Models (Database)
+- Represents how data is stored (tables/entities)
+- May differ from domain objects due to relational concerns (keys, joins, indexing)
+
+This prevents the database schema and API contract from dictating domain behaviour.
+
+---
+
+## 5. Repository Pattern
+
+Data access is abstracted behind **repository interfaces** owned by the Application/Domain boundary and implemented in Infrastructure. This aligns with the repository pattern definition: a repository mediates between domain and data mapping layers and behaves like an in-memory collection of domain objects.
+
+**Example interfaces (conceptual)**
+- `IProductRepository`
+- `ISupplierRepository`
+- `IPurchaseOrderRepository`
+- `ITransactionRepository`
+
+**Benefits**
+- Allows swapping persistence (SQLite vs JSON) without changing business logic
+- Simplifies unit testing via mocks/fakes
+
+---
+
+## 6. Role-Based Access (Non-Authentication)
+
+The system supports **three roles** (Warehouse Staff, Manager, Administrator) to control available operations. This is a functional requirement, not a security feature:
+- No authentication/password handling is in scope.
+- Role selection can be configured (e.g., choose role at startup).
+
+This supports realistic workflow separation while keeping scope appropriate.
+
+---
+
+## 7. Report Generation and Export
+
+Reports are generated by the backend and can be **exported as a readable file** to support sharing/hand-in evidence:
+- Human-readable: `TXT`
+- Machine-readable: `JSON`
+
+The export action records:
+- report type
+- date/time generated
+- filter range (if used)
+- output format and file path
+
+This is implemented in Infrastructure (file I/O), triggered by Application services (use-case orchestration).
+
+---
+
+## 8. Design Principles Applied
+
+The design follows common OO principles to improve maintainability and reduce defects:
+
+- **SOLID** principles guide class responsibilities and dependencies, supporting modularity and testability.
+- Dependency direction is controlled to avoid UI/database coupling.
+- Domain rules are enforced close to the data they protect (e.g., stock cannot be negative).
+
+---
+
+## 9. Traceability to Use-Cases
+
+The Application layer will contain a service method for each primary use-case (UC01–UC17).  
+Diagrams and code will reference these use-cases to provide traceability for the report.
+
+---
+
+## 10. Planned Solution Structure (C# + Angular)
+
+### 10.1 Backend (C#)
+Recommended project layout:
+- `Wms.Domain`
+- `Wms.Application`
+- `Wms.Infrastructure`
+- `Wms.Api`
+
+### 10.2 Frontend (Angular)
+- Angular components for UI
+- Angular services calling API endpoints
+- DTO interfaces matching backend DTOs
+
+---
+
+## 11. Appendix: Diagram Files
+- `docs/design/uml/context.puml`
+- `docs/design/uml/container.puml`

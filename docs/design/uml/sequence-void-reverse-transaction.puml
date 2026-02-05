@@ -1,0 +1,33 @@
+@startuml
+title UC16 - Void / Reverse Financial Transaction (Sequence)
+
+actor "Administrator" as Admin
+boundary "API Controller" as API
+control "FinanceService\n(Application)" as Finance
+entity "FinancialTransaction" as FT
+database "Repositories/DB" as DB
+
+Admin -> API : POST /transactions/{id}/void-or-reverse
+API -> Finance : VoidOrReverse(transactionId, action, reason?)
+
+Finance -> DB : Load FinancialTransaction(id)
+DB --> Finance : FinancialTransaction (FT)
+
+alt Void
+  Finance -> FT : MarkVoided(reason)
+  Finance -> DB : Save FinancialTransaction(FT)
+  DB --> Finance : ok
+  Finance --> API : 200 OK (status=Voided)
+else Reverse
+  Finance -> FT : MarkReversed()
+  Finance -> DB : Save FinancialTransaction(FT)
+  DB --> Finance : ok
+  Finance -> FT : Create reversal transaction (offset amount, link original)
+  Finance -> DB : Save reversal transaction
+  DB --> Finance : ok
+  Finance --> API : 200 OK (status=Reversed, reversalId)
+end
+
+API --> Admin : Success response
+
+@enduml

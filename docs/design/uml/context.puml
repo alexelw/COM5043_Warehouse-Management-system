@@ -1,0 +1,16 @@
+@startuml
+' File: docs/design/uml/context.puml
+
+title WMS - System Context
+
+actor "Warehouse Staff" as WarehouseStaff
+actor "Manager" as Manager
+actor "Administrator" as Administrator
+
+rectangle "Warehouse Management System" as WMS
+
+WarehouseStaff --> WMS : uses
+Manager --> WMS : uses
+Administrator --> WMS : uses
+
+@enduml

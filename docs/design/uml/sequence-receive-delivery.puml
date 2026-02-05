@@ -1,0 +1,50 @@
+@startuml
+title UC05 - Receive Delivery (Sequence)
+
+actor "Warehouse Staff" as Staff
+boundary "API Controller" as API
+control "PurchasingService\n(Application)" as Purchasing
+entity "PurchaseOrder\n(Aggregate Root)" as PO
+entity "GoodsReceipt" as GR
+control "InventoryService\n(Application)" as Inventory
+entity "Product" as Product
+entity "StockMovement" as SM
+control "FinanceService\n(Application)" as Finance
+entity "FinancialTransaction" as FT
+database "Repositories/DB" as DB
+
+Staff -> API : POST /purchase-orders/{id}/receipts (received lines)
+API -> Purchasing : ReceiveDelivery(poId, receiptDto)
+
+Purchasing -> DB : Load PurchaseOrder(poId)
+DB --> Purchasing : PurchaseOrder (PO)
+
+Purchasing -> PO : Validate status + outstanding quantities
+Purchasing -> GR : Create GoodsReceipt(receipt lines)
+
+Purchasing -> DB : Save GoodsReceipt(GR)
+DB --> Purchasing : ok
+
+loop For each received line
+  Purchasing -> Inventory : ApplyReceiptLine(productId, qty, reference)
+  Inventory -> DB : Load Product(productId)
+  DB --> Inventory : Product
+  Inventory -> Product : IncreaseStock(qty)  ' VR-INV-01/02
+  Inventory -> SM : Create StockMovement(Receipt)
+  Inventory -> DB : Save Product + StockMovement
+  DB --> Inventory : ok
+end
+
+Purchasing -> PO : Update status (Completed)
+Purchasing -> DB : Save PurchaseOrder(PO)
+DB --> Purchasing : ok
+
+Purchasing -> Finance : PostPurchaseExpense(poId, amount)
+Finance -> FT : Create/Update FinancialTransaction(PurchaseExpense, Posted)
+Finance -> DB : Save FinancialTransaction(FT)
+DB --> Finance : ok
+
+Purchasing --> API : 200 OK (receiptId, updated status)
+API --> Staff : Success response
+
+@enduml

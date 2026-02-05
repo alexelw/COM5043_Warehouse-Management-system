@@ -1,0 +1,57 @@
+@startuml
+title UC08 - Create Customer Order (Sequence)
+
+actor "Warehouse Staff" as Staff
+boundary "API Controller" as API
+control "OrderService\n(Application)" as Orders
+entity "CustomerOrder\n(Aggregate Root)" as CO
+control "InventoryService\n(Application)" as Inventory
+entity "Product" as Product
+entity "StockMovement" as SM
+control "FinanceService\n(Application)" as Finance
+entity "FinancialTransaction" as FT
+database "Repositories/DB" as DB
+
+Staff -> API : POST /customer-orders (order lines)
+API -> Orders : CreateCustomerOrder(orderDto)
+
+Orders -> CO : Create order (Draft)
+Orders -> CO : AddLine(productId, qty, unitPrice) ' VR-CO-02
+
+' Validate stock for all lines before committing
+loop For each order line
+  Orders -> DB : Load Product(productId)
+  DB --> Orders : Product
+  Orders -> Inventory : CheckAvailableStock(productId, qty)
+  Inventory --> Orders : available/not available
+end
+
+alt Insufficient stock
+  Orders --> API : 409 Conflict (InsufficientStock)
+  API --> Staff : Error response
+else Stock available
+  Orders -> CO : Confirm() ' VR-CO-04 (status)
+  Orders -> DB : Save CustomerOrder(CO)
+  DB --> Orders : ok
+
+  ' Apply stock changes + movements
+  loop For each order line
+    Orders -> Inventory : IssueStock(productId, qty, reference)
+    Inventory -> DB : Load Product(productId)
+    DB --> Inventory : Product
+    Inventory -> Product : DecreaseStock(qty) ' VR-INV-01
+    Inventory -> SM : Create StockMovement(Issue)
+    Inventory -> DB : Save Product + StockMovement
+    DB --> Inventory : ok
+  end
+
+  Orders -> Finance : RecordSale(orderId, amount)
+  Finance -> FT : Create FinancialTransaction(Sale)
+  Finance -> DB : Save FinancialTransaction(FT)
+  DB --> Finance : ok
+
+  Orders --> API : 201 Created (orderId, status)
+  API --> Staff : Success response
+end
+
+@enduml

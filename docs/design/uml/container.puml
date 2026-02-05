@@ -1,0 +1,13 @@
+@startuml
+' File: docs/design/uml/container.puml
+
+title WMS - Container Diagram
+
+rectangle "Angular SPA" as Spa
+rectangle "WMS API" as Api
+database "WMS Database" as Db
+
+Spa --> Api : HTTP
+Api --> Db : SQL
+
+@enduml

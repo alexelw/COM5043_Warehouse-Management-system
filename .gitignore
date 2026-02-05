@@ -5,9 +5,14 @@
 /tmp
 /out-tsc
 /bazel-out
+**/dist/
+**/tmp/
+**/out-tsc/
+**/bazel-out/
 
 # Node
 /node_modules
+**/node_modules/
 npm-debug.log
 yarn-error.log
 
@@ -31,9 +36,11 @@ yarn-error.log
 
 # Miscellaneous
 /.angular/cache
+**/.angular/
 .sass-cache/
 /connect.lock
 /coverage
+**/coverage/
 /libpeerconnection.log
 testem.log
 /typings
@@ -42,3 +49,12 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# .NET build artifacts
+**/bin/
+**/obj/
+.vs/
+**/.vs/
+*.user
+*.rsuser
+*.suo

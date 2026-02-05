@@ -1,0 +1,33 @@
+{
+  "FSharp.suggestGitignore": false,
+  "files.exclude": {
+    "**/bin": true,
+    "**/obj": true,
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/coverage": true,
+    "**/.angular": true,
+    "**/.vs": true,
+    "**/.idea": true
+  },
+  "search.exclude": {
+    "**/bin": true,
+    "**/obj": true,
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/coverage": true,
+    "**/.angular": true,
+    "**/.vs": true,
+    "**/.idea": true
+  },
+  "files.watcherExclude": {
+    "**/bin/**": true,
+    "**/obj/**": true,
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/coverage/**": true,
+    "**/.angular/**": true,
+    "**/.vs/**": true,
+    "**/.idea/**": true
+  }
+}

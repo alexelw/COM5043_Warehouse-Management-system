@@ -1,0 +1,236 @@
+@startuml
+' File: /design/uml/domain-model.puml
+
+hide circle
+hide empty members
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+
+' =========================
+'  Value Objects + Enums
+' =========================
+class Money <<ValueObject>> {
+  +Amount : decimal
+  +Currency : string  ' fixed "GBP"
+}
+
+class ContactDetails <<ValueObject>> {
+  +Email : string?
+  +Phone : string?
+  +Address : string?
+}
+
+class DateRange <<ValueObject>> {
+  +From : DateTime
+  +To : DateTime
+}
+
+enum Role {
+  WarehouseStaff
+  Manager
+  Administrator
+}
+
+enum PurchaseOrderStatus {
+  Pending
+  PartiallyReceived
+  Completed
+  Cancelled
+}
+
+enum CustomerOrderStatus {
+  Draft
+  Confirmed
+  Cancelled
+}
+
+enum StockMovementType {
+  Receipt
+  Issue
+  Adjustment
+}
+
+enum TransactionType {
+  Sale
+  PurchaseExpense
+}
+
+enum TransactionStatus {
+  Pending
+  Posted
+  Voided
+  Reversed
+}
+
+enum ExportFormat {
+  TXT
+  JSON
+}
+
+enum ReportType {
+  SalesSummary
+  ExpenseSummary
+}
+
+' =========================
+'  Core Entities
+' =========================
+class User <<Entity>> {
+  +UserId
+  +DisplayName : string
+  +Role : Role
+}
+
+class Supplier <<Entity>> {
+  +SupplierId
+  +Name : string
+  +Contact : ContactDetails
+}
+
+class Product <<Entity>> {
+  +ProductId
+  +Sku : string
+  +Name : string
+  +ReorderLevel : int
+  +UnitCost : Money
+  --
+  +IncreaseStock(qty:int)
+  +DecreaseStock(qty:int)
+}
+
+' =========================
+'  Purchasing (Aggregate)
+' =========================
+class PurchaseOrder <<AggregateRoot>> {
+  +PurchaseOrderId
+  +SupplierId
+  +Status : PurchaseOrderStatus
+  +CreatedAt : DateTime
+  --
+  +AddLine(productId, qty:int, unitCost:Money)
+  +Cancel()
+  +ReceiveGoods(receipt:GoodsReceipt)
+}
+
+class PurchaseOrderLine <<Entity>> {
+  +PurchaseOrderLineId
+  +ProductId
+  +QuantityOrdered : int
+  +UnitCostAtOrder : Money
+}
+
+class GoodsReceipt <<Entity>> {
+  +GoodsReceiptId
+  +PurchaseOrderId
+  +ReceivedAt : DateTime
+}
+
+class GoodsReceiptLine <<Entity>> {
+  +GoodsReceiptLineId
+  +ProductId
+  +QuantityReceived : int
+}
+
+' =========================
+'  Sales (Aggregate)
+' =========================
+class Customer <<Entity>> {
+  +CustomerId
+  +Name : string
+  +Contact : ContactDetails?
+}
+
+class CustomerOrder <<AggregateRoot>> {
+  +CustomerOrderId
+  +CustomerId
+  +Status : CustomerOrderStatus
+  +CreatedAt : DateTime
+  --
+  +AddLine(productId, qty:int, unitPrice:Money)
+  +Confirm()
+  +Cancel()
+}
+
+class CustomerOrderLine <<Entity>> {
+  +CustomerOrderLineId
+  +ProductId
+  +Quantity : int
+  +UnitPriceAtSale : Money
+}
+
+' =========================
+'  Inventory Audit + Finance
+' =========================
+class StockMovement <<Entity>> {
+  +StockMovementId
+  +ProductId
+  +Type : StockMovementType
+  +Quantity : int
+  +OccurredAt : DateTime
+  +Reason : string?
+  +ReferenceType : string
+  +ReferenceId
+}
+
+class FinancialTransaction <<Entity>> {
+  +TransactionId
+  +Type : TransactionType
+  +Amount : Money
+  +Status : TransactionStatus
+  +OccurredAt : DateTime
+  +ReferenceType : string
+  +ReferenceId
+  +ReversalOfTransactionId
+}
+
+class ReportExport <<Entity>> {
+  +ReportExportId
+  +ReportType : ReportType
+  +Format : ExportFormat
+  +GeneratedAt : DateTime
+  +FilePath : string
+  +DateRange : DateRange?
+}
+
+' =========================
+'  Relationships (with multiplicities)
+' =========================
+
+' Roles
+User "0..*" --> "1" Role : has
+
+' Supplier -> Purchase Orders
+Supplier "1" --> "0..*" PurchaseOrder : places
+
+' Purchase Order aggregate composition
+PurchaseOrder "1" *-- "1..*" PurchaseOrderLine : lines
+
+' Purchase Order -> Goods Receipts (delivery audit)
+PurchaseOrder "1" o-- "0..*" GoodsReceipt : receipts
+GoodsReceipt "1" *-- "1..*" GoodsReceiptLine : lines
+
+' Product usage in lines
+Product "1" <-- "0..*" PurchaseOrderLine : for
+Product "1" <-- "0..*" GoodsReceiptLine : received
+Product "1" <-- "0..*" CustomerOrderLine : sold
+
+' Customer -> Orders
+Customer "1" --> "0..*" CustomerOrder : places
+
+' Customer Order aggregate composition
+CustomerOrder "1" *-- "1..*" CustomerOrderLine : lines
+
+' Product -> Stock Movements audit log
+Product "1" --> "0..*" StockMovement : movements
+
+' Financial transactions reference business events
+PurchaseOrder ..> FinancialTransaction : creates expense
+CustomerOrder ..> FinancialTransaction : creates sale
+GoodsReceipt ..> StockMovement : creates receipt movement
+CustomerOrder ..> StockMovement : creates issue movement
+
+' Report exports built from transactions (conceptual)
+FinancialTransaction ..> ReportExport : aggregated into
+
+@enduml

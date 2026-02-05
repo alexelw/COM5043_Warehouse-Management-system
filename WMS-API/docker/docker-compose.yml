@@ -1,9 +1,35 @@
 services:
+  wms-mysql:
+    image: mysql:8.4
+    container_name: wms-mysql
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpass
+      - MYSQL_DATABASE=wms_db
+      - MYSQL_USER=wms_user
+      - MYSQL_PASSWORD=wms_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - wms-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD-SHELL", "mysqladmin ping -h localhost -uwms_user -pwms_pass" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   wms-api:
     build:
       context: ..
       dockerfile: docker/Dockerfile.api
+    depends_on:
+      wms-mysql:
+        condition: service_healthy
     ports:
       - "8080:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=server=wms-mysql;port=3306;database=wms_db;user=wms_user;password=wms_pass;
+
+volumes:
+  wms-mysql-data:

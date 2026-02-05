@@ -1,0 +1,144 @@
+@startuml
+hide circle
+skinparam linetype ortho
+
+entity suppliers {
+  *supplier_id : PK
+  --
+  name
+  email
+  phone
+  address
+}
+
+entity products {
+  *product_id : PK
+  --
+  sku <<unique>>
+  name
+  supplier_id : FK
+  reorder_threshold
+  unit_cost_amount
+  unit_cost_currency
+  quantity_on_hand
+}
+
+entity purchase_orders {
+  *purchase_order_id : PK
+  --
+  supplier_id : FK
+  status
+  created_at
+}
+
+entity purchase_order_lines {
+  *purchase_order_line_id : PK
+  --
+  purchase_order_id : FK
+  product_id : FK
+  quantity_ordered
+  unit_cost_amount
+  unit_cost_currency
+}
+
+entity goods_receipts {
+  *goods_receipt_id : PK
+  --
+  purchase_order_id : FK
+  received_at
+}
+
+entity goods_receipt_lines {
+  *goods_receipt_line_id : PK
+  --
+  goods_receipt_id : FK
+  product_id : FK
+  quantity_received
+}
+
+entity customers {
+  *customer_id : PK
+  --
+  name
+  email
+  phone
+  address
+}
+
+entity customer_orders {
+  *customer_order_id : PK
+  --
+  customer_id : FK
+  status
+  created_at
+}
+
+entity customer_order_lines {
+  *customer_order_line_id : PK
+  --
+  customer_order_id : FK
+  product_id : FK
+  quantity
+  unit_price_amount
+  unit_price_currency
+}
+
+entity stock_movements {
+  *stock_movement_id : PK
+  --
+  product_id : FK
+  type
+  quantity
+  occurred_at
+  reference_type
+  reference_id
+  reason
+}
+
+entity financial_transactions {
+  *transaction_id : PK
+  --
+  type
+  amount
+  currency
+  status
+  occurred_at
+  reference_type
+  reference_id
+  reversal_of_transaction_id
+}
+
+entity report_exports {
+  *report_export_id : PK
+  --
+  report_type
+  format
+  generated_at
+  file_path
+  range_from
+  range_to
+}
+
+entity users {
+  *user_id : PK
+  --
+  display_name
+  role
+}
+
+suppliers ||--o{ purchase_orders
+suppliers ||--o{ products
+purchase_orders ||--|{ purchase_order_lines
+products ||--o{ purchase_order_lines
+
+purchase_orders ||--o{ goods_receipts
+goods_receipts ||--|{ goods_receipt_lines
+products ||--o{ goods_receipt_lines
+
+customers ||--o{ customer_orders
+customer_orders ||--|{ customer_order_lines
+products ||--o{ customer_order_lines
+
+products ||--o{ stock_movements
+
+@enduml

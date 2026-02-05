@@ -1,137 +1,142 @@
 # COM5043 Warehouse Management System
 
-## Overview
+## Project Status
 
-This repository contains an **object‑oriented Warehouse Management System (WMS)** developed for the COM5043 Object Oriented Programming module. The system is designed to demonstrate clean architecture, strong typing, automated testing, and industry‑standard DevOps practices.
+This repository is currently in the design and setup phase.
 
-The solution is split into a **C# ASP.NET Core backend** and an **Angular (TypeScript) frontend**, with full CI, static analysis, and containerisation.
+The focus so far has been:
+- Defining scope and assumptions
+- Setting up a clean multi-project architecture
+- Setting up CI and quality tooling
+- Preparing frontend and backend foundations for implementation
 
----
+## What Has Been Completed
 
-## Technology Stack
+### 1) Architecture and Solution Setup
 
-### Backend
+Backend solution scaffolded as a layered/clean architecture in `WMS-API`:
+- `Wms.Api`: API host and configuration
+- `Wms.Application`: use-case/application layer
+- `Wms.Domain`: core business/domain layer
+- `Wms.Infrastructure`: infrastructure concerns
+- `Wms.Contracts`: DTO and contract boundary
+- `Wms.Common`: shared cross-cutting code
 
-* **Language**: C# (.NET 8)
-* **Framework**: ASP.NET Core Web API
-* **Architecture**: Layered / Clean Architecture
-* **Testing**: xUnit
-* **Static Analysis**: StyleCop Analyzers, SonarCloud
-* **Containerisation**: Docker & Docker Compose
+Supporting setup:
+- `.NET SDK` pinned in `WMS-API/global.json`
+- Solution file and project references configured in `WMS-API/Wms.sln`
+- Docker build/run setup in `WMS-API/docker/Dockerfile.api` and `WMS-API/docker/docker-compose.yml`
 
-### Frontend
+### 2) Design Documentation
 
-* **Framework**: Angular
-* **Language**: TypeScript (strict mode)
-* **Styling**: SCSS
-* **Testing**: Jasmine + Karma
-* **Formatting**: Prettier
-* **Linting**: ESLint
-* **Code Coverage**: Karma coverage reports
+Design documentation has started under `docs/design`:
+- `docs/design/00-scope-and-assumptions.md`
+- `docs/design/01-requirements.md`
+- `docs/design/02-architecture.md`
 
-### DevOps / Tooling
+API documentation currently available:
+- `docs/api/00-api-coding-standards.md`
 
-* GitHub Actions (CI pipelines)
-* SonarCloud (quality gates & trend analysis)
-* Docker (reproducible backend runtime)
+Scaffolded files prepared for next API design outputs:
+- `docs/api/endpoints.md`
+- `docs/api/dto-definitions.md`
 
----
+### 3) Frontend Foundation
+
+Angular frontend scaffolded in `WMS-Frontend` with:
+- Angular 21 + TypeScript
+- strict linting via ESLint
+- formatting via Prettier
+- unit test setup via Jasmine + Karma
+- CI test command with coverage (`npm run test:ci`)
+
+### 4) CI, Quality Gates, and Tooling
+
+GitHub Actions workflows are configured:
+- `.github/workflows/backend.yml`: restore/build/test .NET
+- `.github/workflows/frontend.yml`: format/lint/test/build Angular
+- `.github/workflows/sonar.yml`: SonarCloud analysis for backend and frontend
+
+Sonar configuration is set in `WMS-API/sonar-project.properties` and aligned to this repo's actual folder structure.
 
 ## Repository Structure
 
-```
+```text
 COM5043_Warehouse-Management-system/
-│
 ├─ .github/workflows/
-│  ├─ backend.yml        # CI: build & test .NET backend
-│  ├─ frontend.yml       # CI: format, lint, test, coverage, build Angular
-│  └─ sonar.yml          # CI: SonarCloud static analysis
-│
-├─ WMS-API/               # Backend (ASP.NET Core)
+│  ├─ backend.yml
+│  ├─ frontend.yml
+│  └─ sonar.yml
+├─ docs/
+│  ├─ design/
+│  │  ├─ 00-scope-and-assumptions.md
+│  │  ├─ 01-requirements.md
+│  │  └─ 02-architecture.md
+│  └─ api/
+│     ├─ 00-api-coding-standards.md
+│     ├─ endpoints.md
+│     └─ dto-definitions.md
+├─ WMS-API/
 │  ├─ src/
-│  │  ├─ Wms.Api/         # API layer (controllers, Program.cs, Swagger)
-│  │  ├─ Wms.Application/ # Application services & use cases
-│  │  ├─ Wms.Domain/      # Core domain models and business rules
-│  │  ├─ Wms.Infrastructure/ # Data access & external concerns
-│  │  ├─ Wms.Contracts/   # DTOs and API contracts
-│  │  └─ Wms.Common/      # Shared utilities
-│  │
+│  │  ├─ Wms.Api/
+│  │  ├─ Wms.Application/
+│  │  ├─ Wms.Domain/
+│  │  ├─ Wms.Infrastructure/
+│  │  ├─ Wms.Contracts/
+│  │  └─ Wms.Common/
 │  ├─ tests/
-│  │  ├─ Wms.Domain.Tests/
-│  │  └─ Wms.Application.Tests/
-│  │
 │  ├─ docker/
-│  │  ├─ Dockerfile.api
-│  │  └─ docker-compose.yml
-│  │
 │  ├─ Wms.sln
-│  └─ global.json         # SDK pin with roll‑forward enabled
-│
-├─ WMS-Frontend/          # Angular frontend
-│  ├─ src/
-│  ├─ coverage/
-│  ├─ angular.json
-│  ├─ package.json
-│  └─ karma.conf.js
-│
-├─ sonar-project.properties
-└─ README.md
+│  ├─ global.json
+│  └─ sonar-project.properties
+└─ WMS-Frontend/
+   ├─ src/
+   ├─ angular.json
+   ├─ eslint.config.js
+   └─ package.json
 ```
 
----
+## Tech Stack
 
-## Backend Design
+- Backend: C# / .NET 8 / ASP.NET Core Web API / xUnit
+- Frontend: Angular 21 / TypeScript / Jasmine + Karma / ESLint / Prettier / SCSS
+- Quality & DevOps: GitHub Actions / SonarCloud / Docker
+- Database: MySQL 8 + Entity Framework Core (Pomelo provider)
 
-* **Domain‑driven structure** separating business rules from infrastructure
-* API layer is **decoupled** from domain and application logic
-* Strong use of **encapsulation, abstraction, and separation of concerns**
-* Swagger enabled for API documentation and manual testing
-* Dockerised for consistent local and CI execution
+## Database Setup (MySQL + EF Core)
 
----
+The backend is now configured for:
+- MySQL provider via `Pomelo.EntityFrameworkCore.MySql`
+- EF Core DbContext in `WMS-API/src/Wms.Infrastructure/Persistence/WmsDbContext.cs`
+- entity mapping in `WMS-API/src/Wms.Infrastructure/Persistence/Configurations/`
+- design-time factory for migrations in `WMS-API/src/Wms.Infrastructure/Persistence/WmsDbContextFactory.cs`
 
-## Frontend Design
+Connection string key:
+- `ConnectionStrings:DefaultConnection` in `WMS-API/src/Wms.Api/appsettings.json`
 
-* Angular application used purely as a **UI driver** for backend functionality
-* Business logic remains in the backend, aligning with module guidance
-* Strict TypeScript configuration to minimise runtime errors
-* Automated formatting, linting, and testing enforced via CI
+Docker compose includes:
+- `wms-mysql` service (MySQL 8.4)
+- `wms-api` service configured to connect to the MySQL container
 
----
+Start both services:
 
-## Testing Strategy
+```bash
+docker compose -f WMS-API/docker/docker-compose.yml up --build
+```
 
-### Backend
+### EF Core Migration Commands
 
-* Unit tests for **Domain** and **Application** layers
-* Tests run locally, in Docker, and in CI
+From repository root:
 
-### Frontend
+```bash
+dotnet tool install --global dotnet-ef
+dotnet ef migrations add InitialCreate --project WMS-API/src/Wms.Infrastructure --startup-project WMS-API/src/Wms.Api --output-dir Persistence/Migrations
+dotnet ef database update --project WMS-API/src/Wms.Infrastructure --startup-project WMS-API/src/Wms.Api
+```
 
-* Component and configuration tests using Jasmine and Karma
-* Code coverage generated in CI mode
+## Current Implementation Note
 
----
-
-## Continuous Integration
-
-Each push and pull request triggers:
-
-* Backend build and tests
-* Frontend formatting, linting, tests, and coverage
-* SonarCloud analysis for both C# and TypeScript
-
-This ensures consistent quality checks and enables **trend‑based reflection** in the final report.
-
----
-
-## Module Alignment
-
-This project demonstrates:
-
-* **LO1**: Application of object‑oriented principles with backend focus
-* **LO2**: Mapping of OO design to concrete implementation
-* **LO3**: Use of encapsulation, inheritance, and polymorphism
-* **LO4**: Use of CASE tools (CI, static analysis, automated testing)
-
----
+This is intentionally a setup-first stage:
+- The codebase currently contains scaffolding and baseline templates.
+- Business entities, use cases, endpoints, and detailed tests are the next phase.
+- The project structure is ready for that implementation work.
