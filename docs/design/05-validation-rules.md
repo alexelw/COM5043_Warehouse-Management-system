@@ -1,6 +1,6 @@
 # 05 — Validation Rules and Invariants
 
-This document lists the business rules that must always be enforced by the system.
+Lists the business rules that must always be enforced by the system.
 Rules are grouped by domain area and include where enforcement will occur.
 
 Legend:
@@ -32,7 +32,6 @@ Legend:
 - Rule: Quantity on hand cannot go below 0.
 - Enforced in: Domain (`DecreaseStock`) + Application (pre-check)
 
-### VR-INV-02: Quantity must be a positive integer
 ### VR-INV-02: Stock movement quantity must be valid
 - Rule: Receipt/Issue quantities must be > 0; Adjustment quantity must be a non-zero integer (sign indicates increase/decrease).
 - Enforced in: Domain + API
@@ -125,7 +124,7 @@ Legend:
 
 ## 7. Mapping to Tests (initial plan)
 
-This table becomes the basis for unit tests later.
+The table is used as the basis for unit tests later.
 
 | Rule ID | Suggested test type |
 |---|---|

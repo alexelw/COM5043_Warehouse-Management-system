@@ -1,7 +1,7 @@
 # API Endpoints
 
-This document defines the HTTP API surface for the Warehouse Management System (WMS).
-The API acts as a transport layer only; all business rules are implemented in the
+Defines the HTTP API surface for the Warehouse Management System (WMS).
+The API acts as a transport layer; business rules are implemented in the
 Application and Domain layers.
 
 Endpoints are grouped by resource and mapped directly to the defined use-cases
@@ -19,6 +19,92 @@ is listed.
 - Controllers remain thin and delegate to Application services
 - Errors follow a standard error response model
 
+Unless stated otherwise, all non-2xx responses return the standard error response
+defined below.
+
+### 1.1 Standard Error Responses
+
+All error responses return a consistent JSON body.
+
+```json
+{
+  "traceId": "string",
+  "code": "string",
+  "message": "string",
+  "errors": {
+    "field": [
+      "message"
+    ]
+  }
+}
+```
+
+- `traceId` is a request correlation identifier.
+- `code` is a machine-readable error code.
+- `message` is a user-facing summary.
+- `errors` is a field-to-errors map used for validation failures.
+
+| Status | code | When |
+|---|---|---|
+| 400 | `validation_failed` | Request shape or validation rules fail |
+| 403 | `forbidden` | Selected role is valid but not allowed for the endpoint |
+| 404 | `not_found` | Resource does not exist |
+| 409 | `conflict` | Business rule conflict |
+| 500 | `server_error` | Unexpected server error |
+
+**Example: 400 Validation Error**
+```json
+{
+  "traceId": "00-abc123",
+  "code": "validation_failed",
+  "message": "One or more validation errors occurred.",
+  "errors": {
+    "name": [
+      "Name is required."
+    ]
+  }
+}
+```
+
+**Example: 404 Not Found**
+```json
+{
+  "traceId": "00-def456",
+  "code": "not_found",
+  "message": "Supplier not found.",
+  "errors": {}
+}
+```
+
+**Example: 409 Conflict**
+```json
+{
+  "traceId": "00-ghi789",
+  "code": "conflict",
+  "message": "Cannot delete supplier with open purchase orders.",
+  "errors": {}
+}
+```
+
+### 1.2 Role Selection
+
+All role-protected endpoints require an `X-Wms-Role` request header.
+
+- Allowed values: `WarehouseStaff`, `Manager`, `Administrator`
+- Missing or invalid values return `400 Bad Request`
+- Valid but disallowed values return `403 Forbidden`
+- Health endpoints remain public
+
+### 1.3 Query Parameters (List Endpoints)
+
+List endpoints support optional pagination and sorting.
+
+- `page` (optional, default `1`) - 1-based page index.
+- `pageSize` (optional, default `50`, max `200`) - number of items per page.
+- `sort` (optional) - field name to sort by.
+- `order` (optional, `asc|desc`) - sort direction.
+- `q` (optional) - free-text search (where applicable).
+
 ---
 
 ## 2. Supplier Management
@@ -34,6 +120,7 @@ Creates a new supplier record.
 **Responses**
 - `201 Created`
 - `400 Bad Request`
+- `404 Not Found`
 - `409 Conflict`
 
 ---
@@ -44,6 +131,13 @@ Creates a new supplier record.
 **Role:** Manager  
 
 Returns all suppliers.
+
+**Query Parameters**
+- `page` (optional, default `1`)
+- `pageSize` (optional, default `50`, max `200`)
+- `sort` (optional, `name`, default `name`)
+- `order` (optional, `asc|desc`, default `asc`)
+- `q` (optional, search by name, email, phone)
 
 **Responses**
 - `200 OK`
@@ -75,6 +169,8 @@ Updates supplier details.
 - `200 OK`
 - `400 Bad Request`
 - `404 Not Found`
+- `409 Conflict`
+- `409 Conflict`
 
 ---
 
@@ -101,6 +197,15 @@ Deletes (or deactivates) a supplier.
 
 Returns purchase order history for a supplier.
 
+**Query Parameters**
+- `page` (optional, default `1`)
+- `pageSize` (optional, default `50`, max `200`)
+- `sort` (optional, `createdAt|status`, default `createdAt`)
+- `order` (optional, `asc|desc`, default `desc`)
+- `status` (optional, `Pending|PartiallyReceived|Completed|Cancelled`)
+- `from` (optional, `YYYY-MM-DD`)
+- `to` (optional, `YYYY-MM-DD`)
+
 **Responses**
 - `200 OK`
 - `404 Not Found`
@@ -119,6 +224,8 @@ Creates a new product.
 **Responses**
 - `201 Created`
 - `400 Bad Request`
+- `404 Not Found`
+- `404 Not Found`
 - `409 Conflict`
 
 ---
@@ -129,6 +236,14 @@ Creates a new product.
 **Role:** Manager  
 
 Returns product catalogue.
+
+**Query Parameters**
+- `page` (optional, default `1`)
+- `pageSize` (optional, default `50`, max `200`)
+- `sort` (optional, `name|sku|quantityOnHand|reorderThreshold`, default `name`)
+- `order` (optional, `asc|desc`, default `asc`)
+- `supplierId` (optional, filter by supplier)
+- `q` (optional, search by name or SKU)
 
 **Responses**
 - `200 OK`
@@ -159,6 +274,7 @@ Updates product details.
 - `200 OK`
 - `400 Bad Request`
 - `404 Not Found`
+- `409 Conflict`
 
 ---
 
@@ -184,6 +300,13 @@ Deletes or deactivates a product.
 
 Returns current stock levels.
 
+**Query Parameters**
+- `page` (optional, default `1`)
+- `pageSize` (optional, default `50`, max `200`)
+- `sort` (optional, `quantityOnHand|sku|name`, default `quantityOnHand`)
+- `order` (optional, `asc|desc`, default `desc`)
+- `q` (optional, search by name or SKU)
+
 **Responses**
 - `200 OK`
 
@@ -196,6 +319,13 @@ Returns current stock levels.
 **Role:** Manager  
 
 Returns products at or below reorder threshold.
+
+**Query Parameters**
+- `page` (optional, default `1`)
+- `pageSize` (optional, default `50`, max `200`)
+- `sort` (optional, `quantityOnHand|reorderThreshold|name`, default `quantityOnHand`)
+- `order` (optional, `asc|desc`, default `asc`)
+- `q` (optional, search by name or SKU)
 
 **Responses**
 - `200 OK`
@@ -231,6 +361,7 @@ Creates a new purchase order.
 **Responses**
 - `201 Created`
 - `400 Bad Request`
+- `404 Not Found`
 
 ---
 
@@ -241,6 +372,16 @@ Creates a new purchase order.
 **Role:** Manager  
 
 Returns all purchase orders.
+
+**Query Parameters**
+- `page` (optional, default `1`)
+- `pageSize` (optional, default `50`, max `200`)
+- `sort` (optional, `createdAt|status`, default `createdAt`)
+- `order` (optional, `asc|desc`, default `desc`)
+- `supplierId` (optional, filter by supplier)
+- `status` (optional, `Pending|PartiallyReceived|Completed|Cancelled`)
+- `from` (optional, `YYYY-MM-DD`)
+- `to` (optional, `YYYY-MM-DD`)
 
 **Responses**
 - `200 OK`
@@ -302,6 +443,14 @@ Partially Received until remaining quantities are received or cancelled.
 
 Returns delivery history for a purchase order.
 
+**Query Parameters**
+- `page` (optional, default `1`)
+- `pageSize` (optional, default `50`, max `200`)
+- `sort` (optional, `receivedAt`, default `receivedAt`)
+- `order` (optional, `asc|desc`, default `desc`)
+- `from` (optional, `YYYY-MM-DD`)
+- `to` (optional, `YYYY-MM-DD`)
+
 **Responses**
 - `200 OK`
 - `404 Not Found`
@@ -321,6 +470,7 @@ Creates and confirms a customer order.
 **Responses**
 - `201 Created`
 - `400 Bad Request`
+- `404 Not Found`
 - `409 Conflict`
 
 ---
@@ -346,6 +496,16 @@ Returns customer order details.
 **Role:** Manager  
 
 Returns customer order history.
+
+**Query Parameters**
+- `page` (optional, default `1`)
+- `pageSize` (optional, default `50`, max `200`)
+- `sort` (optional, `createdAt|status`, default `createdAt`)
+- `order` (optional, `asc|desc`, default `desc`)
+- `customerId` (optional, filter by customer)
+- `status` (optional, `Draft|Confirmed|Cancelled`)
+- `from` (optional, `YYYY-MM-DD`)
+- `to` (optional, `YYYY-MM-DD`)
 
 **Responses**
 - `200 OK`
@@ -376,6 +536,16 @@ Cancels a draft or confirmed customer order and restores inventory.
 **Role:** Administrator  
 
 Returns recorded financial transactions.
+
+**Query Parameters**
+- `page` (optional, default `1`)
+- `pageSize` (optional, default `50`, max `200`)
+- `sort` (optional, `occurredAt|amount`, default `occurredAt`)
+- `order` (optional, `asc|desc`, default `desc`)
+- `type` (optional, filter by transaction type)
+- `status` (optional, `Pending|Posted|Voided|Reversed`)
+- `from` (optional, `YYYY-MM-DD`)
+- `to` (optional, `YYYY-MM-DD`)
 
 **Responses**
 - `200 OK`
@@ -448,6 +618,16 @@ Exports a financial report to file.
 **Role:** Administrator  
 
 Returns report export records.
+
+**Query Parameters**
+- `page` (optional, default `1`)
+- `pageSize` (optional, default `50`, max `200`)
+- `sort` (optional, `generatedAt`, default `generatedAt`)
+- `order` (optional, `asc|desc`, default `desc`)
+- `reportType` (optional, filter by report type)
+- `format` (optional, `TXT|JSON`)
+- `from` (optional, `YYYY-MM-DD`)
+- `to` (optional, `YYYY-MM-DD`)
 
 **Responses**
 - `200 OK`

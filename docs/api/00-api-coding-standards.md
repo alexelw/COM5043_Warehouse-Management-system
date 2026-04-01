@@ -1,8 +1,7 @@
 # 00 — API Coding Standards
 
-This document defines coding and design standards for the `WMS-API` solution.
-It is tailored to this coursework project and should be used as the default
-development baseline.
+Defines coding and design standards for the `WMS-API` solution.
+It is tailored to this coursework project and acts as the default development baseline.
 
 ---
 
@@ -10,7 +9,7 @@ development baseline.
 
 - Keep code readable, testable, and maintainable.
 - Enforce consistent conventions across all backend projects.
-- Reduce bugs by using clear boundaries and predictable patterns.
+- Reduce defects by using clear boundaries and predictable patterns.
 
 ---
 
@@ -124,7 +123,7 @@ Folder naming recommendation in `Wms.Infrastructure`:
 - `Persistence/` for DbContext, configurations, migrations, repositories.
 
 Why `Persistence` over `Data` or `Models`:
-- `Persistence` clearly describes storage concerns.
+- `Persistence` describes storage concerns.
 - `Data` is broad and ambiguous.
 - `Models` often conflicts with domain models/DTO models naming.
 

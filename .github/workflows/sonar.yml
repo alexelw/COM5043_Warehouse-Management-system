@@ -15,7 +15,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      # ---- Backend (.NET) ----
+      # Backend checks
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -34,15 +34,17 @@ jobs:
           dotnet-sonarscanner begin \
             /k:"alexelw_COM5043_Warehouse-Management-system" \
             /o:"alexelw" \
-            /d:sonar.host.url="https://sonarcloud.io"
+            /d:sonar.host.url="https://sonarcloud.io" \
+            /d:sonar.cs.opencover.reportsPaths="WMS-API/**/TestResults/**/coverage.opencover.xml" \
+            /d:sonar.javascript.lcov.reportPaths="WMS-Frontend/coverage/wms-frontend/lcov.info"
 
       - name: Build .NET
         run: dotnet build WMS-API/Wms.sln --no-restore -c Release
 
       - name: Test .NET
-        run: dotnet test WMS-API/Wms.sln --no-build -c Release
+        run: dotnet test WMS-API/Wms.sln --no-build -c Release --collect:"XPlat Code Coverage;Format=opencover"
 
-      # ---- Frontend (Angular) ----
+      # Frontend checks
       - name: Setup Node
         uses: actions/setup-node@v4
         with:

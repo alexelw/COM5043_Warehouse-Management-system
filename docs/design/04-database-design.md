@@ -1,9 +1,9 @@
 # 04 — Database Design
 
-This document defines the relational database design for the WMS using **MySQL**.
+Defines the relational database design for the WMS using **MySQL**.
 The database stores operational data for suppliers, inventory, purchasing, customer orders,
-and financial records. The schema is designed to map cleanly onto the domain model while
-keeping referential integrity and supporting the required use-cases (UC01–UC17).
+and financial records. The schema maps to the domain model, maintains referential integrity,
+and supports the required use-cases (UC01–UC17).
 
 ---
 
@@ -70,9 +70,9 @@ The ERD is maintained in:
 
 ---
 
-## 5. Indexing Strategy (Minimal but useful)
+## 5. Indexing Strategy (Minimal and targeted)
 
-Recommended indexes:
+Indexes:
 - `products.sku` (unique)
 - `purchase_orders.supplier_id`
 - `purchase_order_lines.product_id`
@@ -88,8 +88,8 @@ Stock availability can be:
 - **Derived** by summing `stock_movements` for a product, or
 - **Cached** as a `products.quantity_on_hand` field and kept consistent via application logic.
 
-For this project, the system will store `products.quantity_on_hand` to keep the UI/API simple,
-while still recording `stock_movements` as an audit log.
+The system stores `products.quantity_on_hand` to support UI/API queries while still recording
+`stock_movements` as an audit log.
 
 ---
 
@@ -102,4 +102,4 @@ The system records report exports in `report_exports` including:
 - output file path
 - optional date range
 
-This provides traceability for UC11 (Export Report).
+This records traceability for UC11 (Export Report).

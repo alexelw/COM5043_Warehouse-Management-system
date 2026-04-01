@@ -1,15 +1,14 @@
 # 01 — System Requirements (Use-Cases)
 
-This document defines the functional behaviour of the Warehouse Management System (WMS).
-Each use-case represents a system operation and forms the basis for class methods,
-validation rules, and test cases.
+Defines the functional behaviour of the Warehouse Management System (WMS).
+Each use-case represents a system operation. It informs class methods and validation rules; test cases derive from it.
 
 ---
 
 ## 1. Actors and Roles
 
-The system supports predefined user roles. Roles determine available operations but do **not**
-include authentication mechanisms.
+The system supports predefined user roles. Roles determine available operations.
+Authentication mechanisms are out of scope.
 
 | Role            | Responsibilities                                                |
 |-----------------|-----------------------------------------------------------------|

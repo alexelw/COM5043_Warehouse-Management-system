@@ -1,48 +1,38 @@
 # 00 — Scope and Assumptions
 
 ## 1. System Purpose
-The system provides a warehouse management platform that maintains accurate stock records, supports supplier and customer order workflows, and records financial transactions related to inventory movement.
+The system provides a warehouse management platform for accurate stock records and order workflows. It records financial transactions related to inventory movement.
 
-Its primary objective is to improve stock visibility, reduce manual processing errors, and provide basic financial reporting for operational decision-making.
+Its primary objective is to improve stock visibility and reduce manual processing errors. It also provides basic financial reporting for operational decision-making.
 
 ---
 
 ## 2. Actors
 
 ### Warehouse Staff
-- View stock levels
-- Record incoming deliveries
-- Process outgoing orders
+Warehouse staff can view stock levels and record incoming deliveries. They also process outgoing orders.
 
 ### Manager
-- Monitor low stock alerts
-- Review supplier and customer order history
+Managers monitor low stock alerts and review supplier and customer order history.
 
 ### Administrator
-- Access financial records
-- Generate summary reports
+Administrators access financial records and generate summary reports.
 
 ---
 
 ## 3. Functional Scope (In Scope)
 
 ### Supplier Management
-- Maintain supplier records
-- Create and track purchase orders
-- Record supplier transaction history
+Maintain supplier records and create or track purchase orders. Record supplier transaction history.
 
 ### Inventory Management
-- Track stock levels
-- Receive stock deliveries
-- Detect low stock conditions
+Track stock levels and receive stock deliveries. Detect low stock conditions.
 
 ### Order Processing
-- Create customer orders
-- Update inventory after sale
+Create customer orders and update inventory after sale.
 
 ### Financial Tracking
-- Record sales and purchase transactions
-- Generate summary financial reports
+Record sales and purchase transactions. Generate summary financial reports.
 
 ---
 
@@ -61,25 +51,15 @@ Its primary objective is to improve stock visibility, reduce manual processing e
 ## 5. Assumptions
 
 ### Operational
-- Single warehouse location
-- Orders cannot exceed available stock
-- Deliveries may be partial; outstanding quantities are tracked until completed or cancelled
+Assume a single warehouse location. Orders cannot exceed available stock. Deliveries may be partial; outstanding quantities are tracked until completed or cancelled.
 
 ### Data
-- Each product has one supplier
-- Stock quantities are whole numbers
-- Fixed currency (GBP)
-- No tax or discount rules
+Each product has one supplier. Stock quantities are whole numbers. Fixed currency (GBP). No tax or discount rules.
 
 ### Usage
-- Single active user at a time
-- Local environment usage only
+Single active user at a time. Local environment usage only.
 
 ---
 
 ## 6. Non-Functional Constraints
-- Strongly typed domain model (C#)
-- User interface separated from business logic
-- Business rules implemented in testable services/entities
-- Modular and maintainable architecture
-- Design supports future system expansion
+Strongly typed domain model (C#). User interface separated from business logic. Business rules implemented in testable services/entities. Modular and maintainable architecture. Design supports future system expansion.

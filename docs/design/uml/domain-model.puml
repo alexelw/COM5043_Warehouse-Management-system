@@ -71,6 +71,7 @@ enum ExportFormat {
 enum ReportType {
   SalesSummary
   ExpenseSummary
+  FinancialSummary
 }
 
 ' =========================

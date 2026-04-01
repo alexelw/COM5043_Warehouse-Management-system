@@ -1,6 +1,6 @@
 # API DTO Definitions
 
-This document defines the Data Transfer Objects (DTOs) used at the API boundary.
+Defines the Data Transfer Objects (DTOs) used at the API boundary.
 DTOs decouple transport from the domain model and provide explicit validation
 contracts between frontend and backend.
 
@@ -79,6 +79,7 @@ Rules
 ```
 
 Rules
+- `supplierId` is required
 - `sku` must be unique
 - `reorderThreshold` >= 0
 - `unitCost.amount` > 0
@@ -99,6 +100,7 @@ Rules
 ```
 
 Rules
+- `supplierId` is required
 - `reorderThreshold` >= 0
 - `unitCost.amount` > 0
 - `unitCost.currency` must be `GBP`
@@ -163,7 +165,9 @@ Rules
 ```
 
 Rules
+- `supplierId` is required
 - At least one line required
+- each line `productId` is required
 - Line quantity > 0
 - `unitCost.currency` must be `GBP`
 
@@ -351,11 +355,15 @@ Rules
 }
 ```
 
+Rules
+- `format` must be `TXT` or `JSON`
+- `from` must be on or before `to` when both are supplied
+
 ### ReportExportResponse
 ```json
 {
   "exportId": "guid",
-  "reportType": "SalesSummary",
+  "reportType": "FinancialSummary",
   "format": "TXT",
   "generatedAt": "2026-02-01T12:00:00Z",
   "filePath": "exports/report-2026-02-01.txt"
