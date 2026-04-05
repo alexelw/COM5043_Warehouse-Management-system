@@ -1,0 +1,75 @@
+<section class="page">
+  <app-page-header
+    eyebrow="Overview"
+    title="Warehouse overview"
+    description="Check API availability, confirm the active role, and jump into the main warehouse workflows."
+  >
+    <button actions class="button button--secondary" type="button" (click)="loadHealth()">
+      Refresh health
+    </button>
+    <a actions class="button button--ghost" routerLink="/inventory">Review stock</a>
+  </app-page-header>
+
+  <app-error-banner [error]="error()" title="Backend connection problem" />
+
+  <section class="grid-2">
+    <article class="surface panel-card stack">
+      <p class="eyebrow">Backend status</p>
+      <h2>API health</h2>
+
+      @if (isLoading()) {
+        <app-loading-state label="Checking the API..." />
+      } @else if (health()) {
+        <div class="split-card">
+          <div class="summary-card">
+            <span class="supporting-text">Name</span>
+            <strong class="summary-card__value">{{ health()!.name }}</strong>
+          </div>
+
+          <div class="summary-card">
+            <span class="supporting-text">Status</span>
+            <strong class="summary-card__value">{{ health()!.status }}</strong>
+          </div>
+        </div>
+      }
+    </article>
+
+    <article class="surface panel-card stack">
+      <p class="eyebrow">Current role</p>
+      <h2>{{ selectedRole() }}</h2>
+      <ul class="check-list">
+        @for (item of roleHighlights[selectedRole()]; track item) {
+          <li>{{ item }}</li>
+        }
+      </ul>
+    </article>
+  </section>
+
+  <section class="metric-grid">
+    @for (item of quickLinks; track item.route) {
+      <article class="surface metric-card stack">
+        <app-status-badge [label]="item.label" [tone]="item.tone" />
+        <h2>{{ item.title }}</h2>
+        <p class="muted">{{ item.description }}</p>
+        <a class="button button--ghost" [routerLink]="item.route">Open {{ item.title }}</a>
+      </article>
+    }
+  </section>
+
+  <section class="grid-2">
+    <article class="surface panel-card stack">
+      <p class="eyebrow">Core behaviour</p>
+      <h2>What this client already handles</h2>
+      <ul class="check-list">
+        @for (item of foundationItems; track item) {
+          <li>{{ item }}</li>
+        }
+      </ul>
+    </article>
+
+    <app-empty-state
+      title="Main workflows are in place"
+      description="Use the role selector and navigation to move between supplier, inventory, order, and finance tasks."
+    />
+  </section>
+</section>

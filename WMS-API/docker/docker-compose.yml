@@ -26,7 +26,7 @@ services:
       wms-mysql:
         condition: service_healthy
     ports:
-      - "8080:8080"
+      - "5021:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=server=wms-mysql;port=3306;database=wms_db;user=wms_user;password=wms_pass;

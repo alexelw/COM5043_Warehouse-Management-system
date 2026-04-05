@@ -1,0 +1,13 @@
+<label class="role-selector">
+  <span class="role-selector__label">Role</span>
+  <select
+    #role
+    class="role-selector__select"
+    [value]="selectedRole()"
+    (change)="updateRole(role.value)"
+  >
+    @for (option of roles; track option) {
+      <option [value]="option">{{ option }}</option>
+    }
+  </select>
+</label>

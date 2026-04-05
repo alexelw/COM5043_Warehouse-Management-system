@@ -1,0 +1,358 @@
+<section class="page">
+  <app-page-header
+    eyebrow="Inventory"
+    title="Inventory"
+    description="This page now follows the backend permissions: Manager handles product setup, while Warehouse Staff handles stock visibility and adjustments."
+  >
+    <button
+      actions
+      class="button button--secondary"
+      type="button"
+      (click)="isManager() ? loadManagerData() : loadWarehouseData()"
+    >
+      Refresh
+    </button>
+  </app-page-header>
+
+  <app-error-banner [error]="loadError()" title="Could not load inventory data" />
+
+  @if (isManager()) {
+    <section class="surface panel-card stack">
+      <div class="toolbar">
+        <div class="section-copy">
+          <p class="eyebrow">Manager view</p>
+          <h2>Products and low stock</h2>
+        </div>
+
+        <form
+          class="toolbar__group"
+          [formGroup]="managerFiltersForm"
+          (ngSubmit)="loadManagerData()"
+        >
+          <label class="field">
+            <span>Search</span>
+            <input formControlName="q" placeholder="Search products" />
+          </label>
+
+          <div class="panel-actions panel-actions--end">
+            <button class="button button--ghost" type="submit">Apply</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="grid-2">
+      <form class="surface panel-card stack" [formGroup]="productForm" (ngSubmit)="submitProduct()">
+        <p class="eyebrow">{{ editingProductId() ? 'Edit' : 'Create' }}</p>
+        <h2>{{ editingProductId() ? 'Update product' : 'Create or edit a product' }}</h2>
+
+        <app-error-banner [error]="productSaveError()" title="Could not save product" />
+
+        <div class="form-grid">
+          <label class="field">
+            <span>Product name</span>
+            <input formControlName="name" placeholder="Steel Bolts Pack" />
+            @if (showProductControlError('name')) {
+              @for (message of productControlErrors('name'); track message) {
+                <p class="field-error">{{ message }}</p>
+              }
+            }
+          </label>
+
+          <label class="field">
+            <span>SKU</span>
+            <input formControlName="sku" placeholder="STL-104" />
+            @if (showProductControlError('sku')) {
+              @for (message of productControlErrors('sku'); track message) {
+                <p class="field-error">{{ message }}</p>
+              }
+            }
+          </label>
+
+          <label class="field">
+            <span>Supplier</span>
+            <select formControlName="supplierId">
+              <option value="">Select a supplier</option>
+              @for (supplier of suppliers(); track supplier.supplierId) {
+                <option [value]="supplier.supplierId">{{ supplier.name }}</option>
+              }
+            </select>
+            @if (showProductControlError('supplierId')) {
+              @for (message of productControlErrors('supplierId'); track message) {
+                <p class="field-error">{{ message }}</p>
+              }
+            }
+            @for (message of productServerErrors('SupplierId', 'supplierId'); track message) {
+              <p class="field-error">{{ message }}</p>
+            }
+          </label>
+
+          <label class="field">
+            <span>Reorder level</span>
+            <input formControlName="reorderThreshold" type="number" min="0" step="1" />
+            @if (showProductControlError('reorderThreshold')) {
+              @for (message of productControlErrors('reorderThreshold'); track message) {
+                <p class="field-error">{{ message }}</p>
+              }
+            }
+          </label>
+
+          <label class="field">
+            <span>Unit cost (GBP)</span>
+            <input formControlName="unitCostAmount" type="number" min="0.01" step="0.01" />
+            @if (showProductControlError('unitCostAmount')) {
+              @for (message of productControlErrors('unitCostAmount'); track message) {
+                <p class="field-error">{{ message }}</p>
+              }
+            }
+            @for (
+              message of productServerErrors('UnitCost.Amount', 'unitCost.amount');
+              track message
+            ) {
+              <p class="field-error">{{ message }}</p>
+            }
+          </label>
+        </div>
+
+        <div class="panel-actions">
+          <button class="button" type="submit" [disabled]="isSavingProduct()">
+            {{ editingProductId() ? 'Update product' : 'Save product' }}
+          </button>
+          <button class="button button--ghost" type="button" (click)="resetProductForm()">
+            Clear
+          </button>
+        </div>
+      </form>
+
+      <article class="surface panel-card stack">
+        <p class="eyebrow">Catalogue</p>
+        <h2>Products</h2>
+
+        @if (isLoading()) {
+          <app-loading-state label="Loading products..." />
+        } @else if (!products().length) {
+          <app-empty-state
+            title="No products found"
+            description="Create the first product or widen the search filter."
+          />
+        } @else {
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>SKU</th>
+                <th>Supplier</th>
+                <th>Stock</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (product of products(); track product.productId) {
+                <tr>
+                  <td>{{ product.name }}</td>
+                  <td>{{ product.sku }}</td>
+                  <td>{{ supplierName(product.supplierId) }}</td>
+                  <td>{{ product.quantityOnHand }}</td>
+                  <td>
+                    <app-status-badge
+                      [label]="productStatus(product)"
+                      [tone]="productTone(product)"
+                    />
+                  </td>
+                  <td>
+                    <div class="table-actions">
+                      <button
+                        class="button button--ghost"
+                        type="button"
+                        (click)="editProduct(product)"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        class="button button--ghost"
+                        type="button"
+                        (click)="deleteProduct(product)"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </article>
+    </section>
+
+    <article class="surface panel-card stack">
+      <p class="eyebrow">Low stock</p>
+      <h2>Products near reorder threshold</h2>
+
+      @if (isLoading()) {
+        <app-loading-state label="Checking low stock..." />
+      } @else if (!lowStockProducts().length) {
+        <app-empty-state
+          title="Nothing needs reordering"
+          description="The current low-stock query returned no products at or below their threshold."
+        />
+      } @else {
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>SKU</th>
+              <th>On hand</th>
+              <th>Threshold</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (product of lowStockProducts(); track product.productId) {
+              <tr>
+                <td>{{ product.name }}</td>
+                <td>{{ product.sku }}</td>
+                <td>{{ product.quantityOnHand }}</td>
+                <td>{{ product.reorderThreshold }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </article>
+  } @else if (isWarehouseStaff()) {
+    <section class="surface panel-card stack">
+      <div class="toolbar">
+        <div class="section-copy">
+          <p class="eyebrow">Warehouse staff view</p>
+          <h2>Stock levels and adjustments</h2>
+        </div>
+
+        <form
+          class="toolbar__group"
+          [formGroup]="stockFiltersForm"
+          (ngSubmit)="loadWarehouseData()"
+        >
+          <label class="field">
+            <span>Search</span>
+            <input formControlName="q" placeholder="Search stock by SKU or name" />
+          </label>
+
+          <div class="panel-actions panel-actions--end">
+            <button class="button button--ghost" type="submit">Apply</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="grid-2">
+      <article class="surface panel-card stack">
+        <p class="eyebrow">Stock view</p>
+        <h2>Current stock levels</h2>
+
+        @if (isLoading()) {
+          <app-loading-state label="Loading stock levels..." />
+        } @else if (!stockLevels().length) {
+          <app-empty-state
+            title="No stock levels found"
+            description="Try another search or check whether the API has product data."
+          />
+        } @else {
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>SKU</th>
+                <th>Stock</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (stockLevel of stockLevels(); track stockLevel.productId) {
+                <tr>
+                  <td>{{ stockLevel.name }}</td>
+                  <td>{{ stockLevel.sku }}</td>
+                  <td>{{ stockLevel.quantityOnHand }}</td>
+                  <td>
+                    <app-status-badge
+                      [label]="stockLevel.quantityOnHand > 0 ? 'Tracked' : 'Empty'"
+                      [tone]="stockTone(stockLevel)"
+                    />
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </article>
+
+      <form
+        class="surface panel-card stack"
+        [formGroup]="adjustmentForm"
+        (ngSubmit)="submitAdjustment()"
+      >
+        <p class="eyebrow">Manual adjustment</p>
+        <h2>Stock correction panel</h2>
+
+        <app-error-banner [error]="adjustmentError()" title="Could not record adjustment" />
+
+        <div class="form-grid">
+          <label class="field">
+            <span>Product</span>
+            <select formControlName="productId">
+              <option value="">Select a product</option>
+              @for (stockLevel of stockLevels(); track stockLevel.productId) {
+                <option [value]="stockLevel.productId">
+                  {{ stockLevel.name }} ({{ stockLevel.sku }})
+                </option>
+              }
+            </select>
+            @if (showAdjustmentControlError('productId')) {
+              @for (message of adjustmentControlErrors('productId'); track message) {
+                <p class="field-error">{{ message }}</p>
+              }
+            }
+          </label>
+
+          <label class="field">
+            <span>Adjustment</span>
+            <input formControlName="quantity" type="number" step="1" />
+            <p class="field-hint">Use a negative number to reduce stock.</p>
+            @if (showAdjustmentControlError('quantity')) {
+              @for (message of adjustmentControlErrors('quantity'); track message) {
+                <p class="field-error">{{ message }}</p>
+              }
+            }
+            @for (message of adjustmentServerErrors('Quantity', 'quantity'); track message) {
+              <p class="field-error">{{ message }}</p>
+            }
+          </label>
+
+          <label class="field">
+            <span>Reason</span>
+            <textarea formControlName="reason" placeholder="Damaged during receiving"></textarea>
+            @if (showAdjustmentControlError('reason')) {
+              @for (message of adjustmentControlErrors('reason'); track message) {
+                <p class="field-error">{{ message }}</p>
+              }
+            }
+            @for (message of adjustmentServerErrors('Reason', 'reason'); track message) {
+              <p class="field-error">{{ message }}</p>
+            }
+          </label>
+        </div>
+
+        <div class="panel-actions">
+          <button class="button" type="submit" [disabled]="isAdjustingStock()">
+            Record adjustment
+          </button>
+        </div>
+      </form>
+    </section>
+  } @else {
+    <app-empty-state
+      title="Inventory actions are role-specific"
+      description="Switch to Manager for product setup or Warehouse Staff for stock-level work."
+    />
+  }
+</section>

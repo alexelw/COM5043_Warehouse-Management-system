@@ -1,0 +1,187 @@
+<section class="page">
+  <app-page-header
+    eyebrow="Manager"
+    title="Suppliers"
+    description="This page now reads and writes supplier records through the API, with search, inline validation, and edit/delete actions."
+  >
+    <button actions class="button button--ghost" type="button" (click)="loadSuppliers()">
+      Refresh list
+    </button>
+    <button actions class="button" type="button" (click)="resetSupplierForm()">New supplier</button>
+  </app-page-header>
+
+  @if (!isManager()) {
+    <app-empty-state
+      title="Manager role required"
+      description="Supplier management is only available when the role selector is set to Manager."
+    />
+  } @else {
+    <app-error-banner [error]="listError()" title="Could not load suppliers" />
+
+    <section class="surface panel-card stack">
+      <div class="toolbar">
+        <div class="section-copy">
+          <p class="eyebrow">Search</p>
+          <h2>Filter supplier list</h2>
+        </div>
+
+        <form class="toolbar__group" [formGroup]="filtersForm" (ngSubmit)="loadSuppliers()">
+          <label class="field">
+            <span>Search</span>
+            <input formControlName="q" placeholder="Name, email, phone" />
+          </label>
+
+          <label class="field">
+            <span>Order</span>
+            <select formControlName="order">
+              <option value="asc">Ascending</option>
+              <option value="desc">Descending</option>
+            </select>
+          </label>
+
+          <div class="panel-actions panel-actions--end">
+            <button class="button button--ghost" type="submit">Apply</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="grid-2">
+      <form
+        class="surface panel-card stack"
+        [formGroup]="supplierForm"
+        (ngSubmit)="submitSupplier()"
+      >
+        <p class="eyebrow">{{ editingSupplierId() ? 'Edit' : 'Create' }}</p>
+        <h2>{{ editingSupplierId() ? 'Update supplier' : 'Supplier details' }}</h2>
+
+        <app-error-banner [error]="saveError()" title="Could not save supplier" />
+
+        <div class="form-grid">
+          <label class="field">
+            <span>Name</span>
+            <input formControlName="name" placeholder="Northfield Parts" />
+            @if (hasControlError('name')) {
+              @for (message of getControlErrors('name'); track message) {
+                <p class="field-error">{{ message }}</p>
+              }
+            }
+            @for (message of getServerErrors('Name', 'name'); track message) {
+              <p class="field-error">{{ message }}</p>
+            }
+          </label>
+
+          <label class="field">
+            <span>Email</span>
+            <input formControlName="email" type="email" placeholder="procurement@example.com" />
+            @if (hasControlError('email')) {
+              @for (message of getControlErrors('email'); track message) {
+                <p class="field-error">{{ message }}</p>
+              }
+            }
+            @for (message of getServerErrors('Email', 'email'); track message) {
+              <p class="field-error">{{ message }}</p>
+            }
+          </label>
+
+          <label class="field">
+            <span>Phone</span>
+            <input formControlName="phone" type="tel" placeholder="0161 555 0132" />
+            @if (hasControlError('phone')) {
+              @for (message of getControlErrors('phone'); track message) {
+                <p class="field-error">{{ message }}</p>
+              }
+            }
+            @for (message of getServerErrors('Phone', 'phone'); track message) {
+              <p class="field-error">{{ message }}</p>
+            }
+          </label>
+
+          <label class="field">
+            <span>Address</span>
+            <textarea formControlName="address" placeholder="12 Mill Road, Leeds"></textarea>
+            @for (message of getServerErrors('Address', 'address'); track message) {
+              <p class="field-error">{{ message }}</p>
+            }
+          </label>
+        </div>
+
+        @if (showContactError()) {
+          <p class="form-error">Add at least one contact field: email, phone, or address.</p>
+        }
+
+        <div class="panel-actions">
+          <button class="button" type="submit" [disabled]="isSaving()">
+            {{ editingSupplierId() ? 'Update supplier' : 'Save supplier' }}
+          </button>
+          <button class="button button--ghost" type="button" (click)="resetSupplierForm()">
+            Clear
+          </button>
+        </div>
+      </form>
+
+      <article class="surface panel-card stack">
+        <p class="eyebrow">Current view</p>
+        <h2>Supplier list</h2>
+
+        @if (isLoading()) {
+          <app-loading-state label="Loading suppliers..." />
+        } @else if (!suppliers().length) {
+          <app-empty-state
+            title="No suppliers found"
+            description="Try a broader search or add the first supplier from the form."
+          />
+        } @else {
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Contact</th>
+                <th>Phone</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (supplier of suppliers(); track supplier.supplierId) {
+                <tr>
+                  <td>{{ supplier.name }}</td>
+                  <td>{{ supplierContact(supplier) }}</td>
+                  <td>{{ supplier.phone ?? 'Not set' }}</td>
+                  <td>
+                    <div class="table-actions">
+                      <button
+                        class="button button--ghost"
+                        type="button"
+                        (click)="editSupplier(supplier)"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        class="button button--ghost"
+                        type="button"
+                        (click)="deleteSupplier(supplier)"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </article>
+    </section>
+
+    <article class="surface panel-card stack">
+      <p class="eyebrow">Validation</p>
+      <h2>What this form now checks</h2>
+      <ul class="bullet-list">
+        <li>Name is required.</li>
+        <li>Email uses browser-friendly email validation.</li>
+        <li>Phone only accepts common phone characters.</li>
+        <li>At least one contact field must be provided before submit.</li>
+      </ul>
+    </article>
+  }
+</section>

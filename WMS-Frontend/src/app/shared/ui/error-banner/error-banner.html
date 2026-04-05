@@ -1,0 +1,10 @@
+@if (error()) {
+  <article class="error-banner">
+    <strong>{{ title() }}</strong>
+    <p>{{ error()!.message }}</p>
+
+    @if (error()!.traceId) {
+      <p class="error-banner__meta">Trace ID: {{ error()!.traceId }}</p>
+    }
+  </article>
+}

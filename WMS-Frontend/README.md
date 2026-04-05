@@ -1,59 +1,31 @@
-# WMSFrontend
+# WMS Frontend
 
-Angular frontend for the COM5043 Warehouse Management System.
+Angular frontend for the Warehouse Management System.
 
-## Development server
+## Run locally
 
-To start a local development server, run:
+The frontend expects the backend API to be available on `http://localhost:5021`.
 
-```bash
-ng serve
-```
-
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+From this folder:
 
 ```bash
-ng generate component component-name
+npm install
+npm start
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Open `http://localhost:4200`.
+
+## Quality checks
 
 ```bash
-ng generate --help
+npm run format:check
+npm run lint
+npm run build
+npm run test:ci
 ```
 
-## Building
+## Notes
 
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with Jasmine + Karma, run:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- `npm start` uses `proxy.conf.json` so `/api` and `/swagger` requests go to the backend.
+- Role selection is stored in local storage and sent as the `X-Wms-Role` header on API requests.
+- The UI assumes the backend database schema has already been created and migrated.

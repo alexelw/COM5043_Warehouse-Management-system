@@ -1,0 +1,379 @@
+<section class="page">
+  <app-page-header
+    eyebrow="Orders"
+    title="Purchase orders"
+    description="This page now matches the API role split: Manager can create and review purchase orders, while Warehouse Staff can record receipts when they have a purchase order ID."
+  >
+    <button
+      actions
+      class="button"
+      type="button"
+      (click)="isManager() ? loadManagerData() : loadWarehouseData()"
+    >
+      Refresh
+    </button>
+  </app-page-header>
+
+  <app-error-banner [error]="loadError()" title="Could not load purchase order data" />
+
+  @if (isManager()) {
+    <section class="surface panel-card stack">
+      <div class="toolbar">
+        <div class="section-copy">
+          <p class="eyebrow">Manager filters</p>
+          <h2>Review open and historical purchase orders</h2>
+        </div>
+
+        <form
+          class="toolbar__group"
+          [formGroup]="managerFiltersForm"
+          (ngSubmit)="loadManagerData()"
+        >
+          <label class="field">
+            <span>Supplier</span>
+            <select formControlName="supplierId">
+              <option value="">All suppliers</option>
+              @for (supplier of suppliers(); track supplier.supplierId) {
+                <option [value]="supplier.supplierId">{{ supplier.name }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Status</span>
+            <select formControlName="status">
+              <option value="">All statuses</option>
+              @for (status of purchaseOrderStatuses; track status) {
+                <option [value]="status">{{ status }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="field">
+            <span>From</span>
+            <input formControlName="from" type="date" />
+          </label>
+
+          <label class="field">
+            <span>To</span>
+            <input formControlName="to" type="date" />
+          </label>
+
+          <div class="panel-actions panel-actions--end">
+            <button class="button button--ghost" type="submit">Apply</button>
+          </div>
+        </form>
+      </div>
+
+      @if (managerFiltersForm.hasError('dateRange')) {
+        <p class="form-error">From date must be on or before To date.</p>
+      }
+    </section>
+
+    <section class="grid-2">
+      <form
+        class="surface panel-card stack"
+        [formGroup]="createPurchaseOrderForm"
+        (ngSubmit)="submitPurchaseOrder()"
+      >
+        <p class="eyebrow">Create</p>
+        <h2>New purchase order</h2>
+
+        <app-error-banner [error]="createError()" title="Could not create purchase order" />
+
+        <label class="field">
+          <span>Supplier</span>
+          <select formControlName="supplierId">
+            <option value="">Select a supplier</option>
+            @for (supplier of suppliers(); track supplier.supplierId) {
+              <option [value]="supplier.supplierId">{{ supplier.name }}</option>
+            }
+          </select>
+          @for (message of createServerErrors('SupplierId', 'supplierId'); track message) {
+            <p class="field-error">{{ message }}</p>
+          }
+        </label>
+
+        <div formArrayName="lines" class="stack">
+          @for (line of purchaseOrderLines.controls; track $index) {
+            <div class="surface panel-card stack" [formGroupName]="$index">
+              <div class="toolbar">
+                <div class="section-copy">
+                  <p class="eyebrow">Line {{ $index + 1 }}</p>
+                  <h2>Purchase line</h2>
+                </div>
+
+                <button
+                  class="button button--ghost"
+                  type="button"
+                  (click)="removePurchaseOrderLine($index)"
+                >
+                  Remove line
+                </button>
+              </div>
+
+              <div class="form-grid">
+                <label class="field">
+                  <span>Product</span>
+                  <select formControlName="productId">
+                    <option value="">Select a product</option>
+                    @for (product of products(); track product.productId) {
+                      <option [value]="product.productId">
+                        {{ product.name }} ({{ product.sku }})
+                      </option>
+                    }
+                  </select>
+                  @if (showPurchaseOrderLineError($index, 'productId')) {
+                    @for (message of purchaseOrderLineErrors($index, 'productId'); track message) {
+                      <p class="field-error">{{ message }}</p>
+                    }
+                  }
+                </label>
+
+                <label class="field">
+                  <span>Quantity</span>
+                  <input formControlName="quantity" type="number" min="1" step="1" />
+                  @if (showPurchaseOrderLineError($index, 'quantity')) {
+                    @for (message of purchaseOrderLineErrors($index, 'quantity'); track message) {
+                      <p class="field-error">{{ message }}</p>
+                    }
+                  }
+                </label>
+
+                <label class="field">
+                  <span>Unit cost (GBP)</span>
+                  <input formControlName="unitCostAmount" type="number" min="0.01" step="0.01" />
+                  @if (showPurchaseOrderLineError($index, 'unitCostAmount')) {
+                    @for (
+                      message of purchaseOrderLineErrors($index, 'unitCostAmount');
+                      track message
+                    ) {
+                      <p class="field-error">{{ message }}</p>
+                    }
+                  }
+                </label>
+              </div>
+            </div>
+          }
+        </div>
+
+        @for (message of createServerErrors('Lines', 'lines'); track message) {
+          <p class="form-error">{{ message }}</p>
+        }
+
+        <div class="panel-actions">
+          <button class="button button--ghost" type="button" (click)="addPurchaseOrderLine()">
+            Add line
+          </button>
+          <button class="button" type="submit" [disabled]="isCreating()">Create order</button>
+        </div>
+      </form>
+
+      <article class="surface panel-card stack">
+        <p class="eyebrow">List</p>
+        <h2>Open and recent purchase orders</h2>
+
+        @if (isLoading()) {
+          <app-loading-state label="Loading purchase orders..." />
+        } @else if (!purchaseOrders().length) {
+          <app-empty-state
+            title="No purchase orders found"
+            description="Try different filters or create the first purchase order."
+          />
+        } @else {
+          <table class="table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Supplier</th>
+                <th>Created</th>
+                <th>Lines</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (order of purchaseOrders(); track order.purchaseOrderId) {
+                <tr>
+                  <td>{{ order.purchaseOrderId }}</td>
+                  <td>{{ supplierName(order.supplierId) }}</td>
+                  <td>{{ formatCreatedAt(order.createdAt) }}</td>
+                  <td>{{ order.lines.length }}</td>
+                  <td>
+                    <app-status-badge [label]="order.status" [tone]="statusTone(order.status)" />
+                  </td>
+                  <td>
+                    <div class="table-actions">
+                      <button
+                        class="button button--ghost"
+                        type="button"
+                        (click)="selectPurchaseOrder(order.purchaseOrderId)"
+                      >
+                        Receipts
+                      </button>
+                      @if (order.status === 'Pending' || order.status === 'PartiallyReceived') {
+                        <button
+                          class="button button--ghost"
+                          type="button"
+                          (click)="cancelPurchaseOrder(order)"
+                        >
+                          Cancel
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </article>
+    </section>
+
+    <article class="surface panel-card stack">
+      <p class="eyebrow">Receipts</p>
+      <h2>Goods receipt history</h2>
+
+      @if (!selectedPurchaseOrderId()) {
+        <p class="supporting-text">Choose a purchase order from the list to load its receipts.</p>
+      } @else if (isLoadingReceipts()) {
+        <app-loading-state label="Loading receipt history..." />
+      } @else if (!receipts().length) {
+        <app-empty-state
+          title="No receipts recorded yet"
+          description="The selected purchase order does not have any delivery history yet."
+        />
+      } @else {
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Receipt ID</th>
+              <th>Received at</th>
+              <th>Lines</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (receipt of receipts(); track receipt.goodsReceiptId) {
+              <tr>
+                <td>{{ receipt.goodsReceiptId }}</td>
+                <td>{{ formatCreatedAt(receipt.receivedAt) }}</td>
+                <td>{{ receipt.lines.length }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </article>
+  } @else if (isWarehouseStaff()) {
+    <section class="grid-2">
+      <article class="surface panel-card stack">
+        <p class="eyebrow">Receiving guide</p>
+        <h2>Record a delivery</h2>
+        <div class="callout">
+          The current API lets Warehouse Staff record receipts, but it does not expose a purchase
+          order lookup endpoint for this role. Enter the purchase order ID from paperwork or another
+          internal reference.
+        </div>
+
+        @if (isLoading()) {
+          <app-loading-state label="Loading product options..." />
+        } @else if (!stockLevels().length) {
+          <app-empty-state
+            title="No stock items available"
+            description="Warehouse Staff product options come from current stock levels."
+          />
+        }
+      </article>
+
+      <form
+        class="surface panel-card stack"
+        [formGroup]="receiveDeliveryForm"
+        (ngSubmit)="submitReceipt()"
+      >
+        <p class="eyebrow">Receive</p>
+        <h2>Delivery lines</h2>
+
+        <app-error-banner [error]="receiveError()" title="Could not record delivery" />
+
+        <label class="field">
+          <span>Purchase order ID</span>
+          <input formControlName="purchaseOrderId" placeholder="Paste the purchase order GUID" />
+          @for (
+            message of receiveServerErrors('purchaseOrderId', 'PurchaseOrderId');
+            track message
+          ) {
+            <p class="field-error">{{ message }}</p>
+          }
+        </label>
+
+        <div formArrayName="lines" class="stack">
+          @for (line of receiptLines.controls; track $index) {
+            <div class="surface panel-card stack" [formGroupName]="$index">
+              <div class="toolbar">
+                <div class="section-copy">
+                  <p class="eyebrow">Receipt line {{ $index + 1 }}</p>
+                  <h2>Received item</h2>
+                </div>
+
+                <button
+                  class="button button--ghost"
+                  type="button"
+                  (click)="removeReceiptLine($index)"
+                >
+                  Remove line
+                </button>
+              </div>
+
+              <div class="form-grid">
+                <label class="field">
+                  <span>Product</span>
+                  <select formControlName="productId">
+                    <option value="">Select a product</option>
+                    @for (stockLevel of stockLevels(); track stockLevel.productId) {
+                      <option [value]="stockLevel.productId">
+                        {{ stockLevel.name }} ({{ stockLevel.sku }})
+                      </option>
+                    }
+                  </select>
+                  @if (showReceiptLineError($index, 'productId')) {
+                    @for (message of receiptLineErrors($index, 'productId'); track message) {
+                      <p class="field-error">{{ message }}</p>
+                    }
+                  }
+                </label>
+
+                <label class="field">
+                  <span>Quantity received</span>
+                  <input formControlName="quantityReceived" type="number" min="1" step="1" />
+                  @if (showReceiptLineError($index, 'quantityReceived')) {
+                    @for (message of receiptLineErrors($index, 'quantityReceived'); track message) {
+                      <p class="field-error">{{ message }}</p>
+                    }
+                  }
+                </label>
+              </div>
+            </div>
+          }
+        </div>
+
+        @for (message of receiveServerErrors('Lines', 'lines'); track message) {
+          <p class="form-error">{{ message }}</p>
+        }
+
+        <div class="panel-actions">
+          <button class="button button--ghost" type="button" (click)="addReceiptLine()">
+            Add line
+          </button>
+          <button class="button button--secondary" type="submit" [disabled]="isReceiving()">
+            Record delivery
+          </button>
+        </div>
+      </form>
+    </section>
+  } @else {
+    <app-empty-state
+      title="Purchase order actions are role-specific"
+      description="Switch to Manager to create and review orders or Warehouse Staff to record receipts."
+    />
+  }
+</section>

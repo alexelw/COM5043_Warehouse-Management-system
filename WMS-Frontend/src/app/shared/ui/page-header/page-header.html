@@ -1,0 +1,14 @@
+<header class="page-header">
+  <div class="page-header__copy">
+    @if (eyebrow()) {
+      <p class="eyebrow">{{ eyebrow() }}</p>
+    }
+
+    <h1>{{ title() }}</h1>
+    <p class="muted">{{ description() }}</p>
+  </div>
+
+  <div class="page-header__actions">
+    <ng-content select="[actions]" />
+  </div>
+</header>

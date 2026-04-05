@@ -1,0 +1,9 @@
+<span
+  class="status-badge"
+  [class.is-success]="tone() === 'success'"
+  [class.is-warning]="tone() === 'warning'"
+  [class.is-danger]="tone() === 'danger'"
+  [class.is-info]="tone() === 'info'"
+>
+  {{ label() }}
+</span>

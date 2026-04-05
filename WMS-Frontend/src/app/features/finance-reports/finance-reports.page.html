@@ -1,0 +1,383 @@
+<section class="page">
+  <app-page-header
+    eyebrow="Administrator"
+    title="Finance and reports"
+    description="This page now talks to the finance and reporting endpoints directly, with admin filters, report preview, export history, and transaction actions kept lightweight."
+  >
+    <button actions class="button button--ghost" type="button" (click)="refreshAll()">
+      Refresh all
+    </button>
+  </app-page-header>
+
+  @if (!isAdministrator()) {
+    <app-empty-state
+      title="Administrator role required"
+      description="Switch the role selector to Administrator to review transactions, preview reports, and manage exports."
+    />
+  } @else {
+    <section class="grid-2">
+      <form class="surface panel-card stack" [formGroup]="reportForm">
+        <p class="eyebrow">Reporting</p>
+        <h2>Preview or export a financial report</h2>
+
+        <app-error-banner [error]="reportError()" title="Could not load report preview" />
+        <app-error-banner [error]="exportError()" title="Could not export report" />
+
+        <div class="form-grid">
+          <label class="field">
+            <span>Export format</span>
+            <select formControlName="format">
+              @for (format of reportFormats; track format) {
+                <option [value]="format">{{ format }}</option>
+              }
+            </select>
+            @for (message of exportServerErrors('Format', 'format'); track message) {
+              <p class="field-error">{{ message }}</p>
+            }
+          </label>
+
+          <label class="field">
+            <span>From</span>
+            <input formControlName="from" type="date" />
+            @for (message of exportServerErrors('From', 'from'); track message) {
+              <p class="field-error">{{ message }}</p>
+            }
+          </label>
+
+          <label class="field">
+            <span>To</span>
+            <input formControlName="to" type="date" />
+            @for (message of exportServerErrors('To', 'to'); track message) {
+              <p class="field-error">{{ message }}</p>
+            }
+          </label>
+        </div>
+
+        @if (reportForm.hasError('dateRange')) {
+          <p class="form-error">From date must be on or before To date.</p>
+        }
+
+        <div class="panel-actions">
+          <button class="button" type="button" (click)="loadReportPreview()">Preview report</button>
+          <button
+            class="button button--secondary"
+            type="button"
+            [disabled]="isExporting()"
+            (click)="submitReportExport()"
+          >
+            Export report
+          </button>
+        </div>
+      </form>
+
+      <article class="surface panel-card stack">
+        <p class="eyebrow">Preview</p>
+        <h2>Financial summary</h2>
+
+        @if (isLoadingReport()) {
+          <app-loading-state label="Loading financial summary..." />
+        } @else if (report()) {
+          <div class="split-card">
+            <div class="summary-card">
+              <span class="supporting-text">Total sales</span>
+              <strong class="summary-card__value">{{ formatTotalSales(report()!) }}</strong>
+            </div>
+
+            <div class="summary-card">
+              <span class="supporting-text">Total expenses</span>
+              <strong class="summary-card__value">{{ formatTotalExpenses(report()!) }}</strong>
+            </div>
+
+            <div class="summary-card">
+              <span class="supporting-text">Net position</span>
+              <strong class="summary-card__value">{{ formatNetPosition(report()!) }}</strong>
+            </div>
+          </div>
+
+          <dl class="key-value">
+            <dt>Report window</dt>
+            <dd>{{ formatReportWindow(report()!) }}</dd>
+          </dl>
+        } @else {
+          <app-empty-state
+            title="No preview loaded yet"
+            description="Use the report controls to load a financial summary for all dates or a specific date range."
+          />
+        }
+
+        @if (lastExport()) {
+          <div class="callout">
+            Latest export saved at <strong>{{ lastExport()!.filePath }}</strong>
+          </div>
+        }
+      </article>
+    </section>
+
+    <section class="surface panel-card stack">
+      <div class="toolbar">
+        <div class="section-copy">
+          <p class="eyebrow">Transactions</p>
+          <h2>Filter financial activity</h2>
+        </div>
+
+        <form
+          class="toolbar__group"
+          [formGroup]="transactionFiltersForm"
+          (ngSubmit)="loadTransactions()"
+        >
+          <label class="field">
+            <span>Type</span>
+            <select formControlName="type">
+              <option value="">All types</option>
+              @for (type of transactionTypes; track type) {
+                <option [value]="type">{{ type }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Status</span>
+            <select formControlName="status">
+              <option value="">All statuses</option>
+              @for (status of transactionStatuses; track status) {
+                <option [value]="status">{{ status }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="field">
+            <span>From</span>
+            <input formControlName="from" type="date" />
+          </label>
+
+          <label class="field">
+            <span>To</span>
+            <input formControlName="to" type="date" />
+          </label>
+
+          <div class="panel-actions panel-actions--end">
+            <button class="button button--ghost" type="submit">Apply</button>
+          </div>
+        </form>
+      </div>
+
+      @if (transactionFiltersForm.hasError('dateRange')) {
+        <p class="form-error">From date must be on or before To date.</p>
+      }
+    </section>
+
+    <section class="grid-2">
+      <article class="surface panel-card stack">
+        <p class="eyebrow">Recorded activity</p>
+        <h2>Recent transactions</h2>
+
+        <app-error-banner [error]="transactionsError()" title="Could not load transactions" />
+
+        @if (isLoadingTransactions()) {
+          <app-loading-state label="Loading transactions..." />
+        } @else if (!transactions().length) {
+          <app-empty-state
+            title="No transactions found"
+            description="Try broader filters or clear the date range to see more financial activity."
+          />
+        } @else {
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Transaction ID</th>
+                <th>Occurred</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Reference</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (transaction of transactions(); track transaction.transactionId) {
+                <tr>
+                  <td>{{ transaction.transactionId }}</td>
+                  <td>{{ formatOccurredAt(transaction.occurredAt) }}</td>
+                  <td>{{ transaction.type }}</td>
+                  <td>{{ formatAmount(transaction.amount) }}</td>
+                  <td>
+                    <app-status-badge
+                      [label]="transaction.status"
+                      [tone]="statusTone(transaction.status)"
+                    />
+                  </td>
+                  <td>{{ transaction.referenceType }} / {{ transaction.referenceId }}</td>
+                  <td>
+                    <div class="table-actions">
+                      <button
+                        class="button button--ghost"
+                        type="button"
+                        (click)="useTransaction(transaction)"
+                      >
+                        Use in form
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </article>
+
+      <form
+        class="surface panel-card stack"
+        [formGroup]="actionForm"
+        (ngSubmit)="submitTransactionAction()"
+      >
+        <p class="eyebrow">Actions</p>
+        <h2>Void or reverse a transaction</h2>
+
+        <app-error-banner [error]="actionError()" title="Could not update transaction" />
+
+        <div class="callout">
+          Use a transaction from the table or paste the ID manually. Voiding requires a reason;
+          reversing keeps the original record and creates a linked reversal.
+        </div>
+
+        <div class="form-grid">
+          <label class="field">
+            <span>Transaction ID</span>
+            <input formControlName="transactionId" placeholder="Paste the transaction GUID" />
+            @if (hasActionControlError('transactionId')) {
+              @for (message of getActionControlErrors('transactionId'); track message) {
+                <p class="field-error">{{ message }}</p>
+              }
+            }
+            @for (message of actionServerErrors('TransactionId', 'transactionId'); track message) {
+              <p class="field-error">{{ message }}</p>
+            }
+          </label>
+
+          <label class="field">
+            <span>Action</span>
+            <select formControlName="action">
+              @for (action of actionOptions; track action) {
+                <option [value]="action">{{ action }}</option>
+              }
+            </select>
+            @for (message of actionServerErrors('Action', 'action'); track message) {
+              <p class="field-error">{{ message }}</p>
+            }
+          </label>
+
+          <label class="field">
+            <span>Reason</span>
+            <textarea
+              formControlName="reason"
+              placeholder="Reason for voiding or note for reversal"
+            ></textarea>
+            <p class="field-hint">
+              {{ isActionReasonRequired() ? 'Required for Void.' : 'Optional for Reverse.' }}
+            </p>
+            @if (hasActionControlError('reason') || actionForm.hasError('reasonRequired')) {
+              @for (message of getActionControlErrors('reason'); track message) {
+                <p class="field-error">{{ message }}</p>
+              }
+            }
+            @for (message of actionServerErrors('Reason', 'reason'); track message) {
+              <p class="field-error">{{ message }}</p>
+            }
+          </label>
+        </div>
+
+        <div class="panel-actions">
+          <button class="button button--secondary" type="submit" [disabled]="isSubmittingAction()">
+            Submit action
+          </button>
+          <button class="button button--ghost" type="button" (click)="clearActionForm()">
+            Clear
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="surface panel-card stack">
+      <div class="toolbar">
+        <div class="section-copy">
+          <p class="eyebrow">Exports</p>
+          <h2>Report export history</h2>
+        </div>
+
+        <form class="toolbar__group" [formGroup]="exportFiltersForm" (ngSubmit)="loadExports()">
+          <label class="field">
+            <span>Report type</span>
+            <select formControlName="reportType">
+              <option value="">All report types</option>
+              @for (reportType of reportTypes; track reportType) {
+                <option [value]="reportType">{{ reportType }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Format</span>
+            <select formControlName="format">
+              <option value="">All formats</option>
+              @for (format of reportFormats; track format) {
+                <option [value]="format">{{ format }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="field">
+            <span>From</span>
+            <input formControlName="from" type="date" />
+          </label>
+
+          <label class="field">
+            <span>To</span>
+            <input formControlName="to" type="date" />
+          </label>
+
+          <div class="panel-actions panel-actions--end">
+            <button class="button button--ghost" type="submit">Apply</button>
+          </div>
+        </form>
+      </div>
+
+      @if (exportFiltersForm.hasError('dateRange')) {
+        <p class="form-error">From date must be on or before To date.</p>
+      }
+
+      <app-error-banner [error]="exportsError()" title="Could not load export history" />
+
+      @if (isLoadingExports()) {
+        <app-loading-state label="Loading export history..." />
+      } @else if (!exports().length) {
+        <app-empty-state
+          title="No exports found"
+          description="Generate the first export from the report form or widen the history filters."
+        />
+      } @else {
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Export ID</th>
+              <th>Report type</th>
+              <th>Format</th>
+              <th>Generated</th>
+              <th>File path</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of exports(); track item.exportId) {
+              <tr>
+                <td>{{ item.exportId }}</td>
+                <td>{{ item.reportType }}</td>
+                <td>{{ item.format }}</td>
+                <td>{{ formatGeneratedAt(item.generatedAt) }}</td>
+                <td>{{ item.filePath }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </section>
+  }
+</section>

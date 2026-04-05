@@ -305,35 +305,71 @@ Planned repositories include:
 
 ---
 
-## 8. Domain Model Diagram
+## 8. Domain Diagrams and Appendix References
 
-The domain model diagram is maintained separately using PlantUML:
+The domain model is supported by a set of UML diagrams that should be included in the report appendices. Each diagram explains a different view of the design: the class-level structure of the domain, the lifecycle of the main aggregates, and the interaction steps for key workflows.
 
+### Appendix A — Domain Model Diagram
 - Source: `docs/design/uml/domain-model.puml`
 - Output: `docs/design/uml/domain-model.png`
 
-The diagram visualises entities, aggregates, and relationships defined in this document.
+This diagram provides the static view of the domain model. It shows the main entities, value objects, aggregate roots, and their relationships across the four domain areas: suppliers and purchasing, inventory, customer orders, and finance. It is the main reference for explaining how concepts such as `Product`, `PurchaseOrder`, `CustomerOrder`, `GoodsReceipt`, `StockMovement`, and `FinancialTransaction` relate to each other.
+
+### Appendix B — Purchase Order State Diagram
+- Source: `docs/design/uml/state-purchase-order.puml`
+
+This diagram explains the lifecycle of a purchase order. It shows that a purchase order starts in `Pending`, moves to `Partially Received` when only some items have been delivered, moves to `Completed` when all ordered quantities have been received, and can be cancelled only while it is still `Pending` or `Partially Received`. This supports the rule that the aggregate controls valid status transitions.
+
+### Appendix C — Customer Order State Diagram
+- Source: `docs/design/uml/state-customer-order.puml`
+
+This diagram explains the lifecycle of a customer order. A new order starts in `Draft`, moves to `Confirmed` when stock checks succeed, and can be cancelled while still `Draft` or after it has been `Confirmed`. The diagram therefore supports the rule that order confirmation and cancellation are controlled through the aggregate rather than by direct database updates.
+
+### Appendix D — Sequence Diagram: Create Customer Order
+- Source: `docs/design/uml/sequence-create-customer-order.puml`
+
+This diagram explains how the `Create Customer Order` use case is carried out across system layers. It shows the API receiving the request, the application service coordinating the workflow, the `CustomerOrder` aggregate enforcing confirmation rules, product stock being checked and reduced, stock movements being recorded, and a sale transaction being created. It is useful for showing how the domain model works in practice rather than just as a static structure.
+
+### Appendix E — Sequence Diagram: Receive Delivery
+- Source: `docs/design/uml/sequence-receive-delivery.puml`
+
+This diagram explains the full-delivery workflow for a purchase order. It shows how a delivery request creates a `GoodsReceipt`, updates product stock, records receipt stock movements, updates the purchase order status, and posts the related purchase expense. This supports the explanation that receiving goods affects several domain concepts while still being controlled through the purchase-order workflow.
+
+### Appendix F — Sequence Diagram: Partial Delivery / Backorder
+- Source: `docs/design/uml/sequence-partial-delivery.puml`
+
+This diagram explains the partial-delivery case, which is important because not all supplier deliveries arrive in one shipment. It shows that the purchase order remains open in the `Partially Received` state, only the received quantities are added to stock, and the financial transaction reflects the partial expense posted so far. This appendix supports the design decision to treat partial delivery as a first-class domain scenario.
+
+### Appendix G — Sequence Diagram: Adjust Stock
+- Source: `docs/design/uml/sequence-adjust-stock.puml`
+
+This diagram explains the manual stock-adjustment workflow. It shows how warehouse staff submit an adjustment, how the relevant `Product` is updated, and how a `StockMovement` is created with a reason so that the change remains auditable. This appendix is useful when explaining how the system maintains inventory traceability outside of purchase and sales workflows.
+
+### Appendix H — Sequence Diagram: Void / Reverse Financial Transaction
+- Source: `docs/design/uml/sequence-void-reverse-transaction.puml`
+
+This diagram explains how administrators can correct financial records. It shows the difference between voiding a transaction and reversing a posted transaction, and it makes clear that the original transaction and any reversal remain linked for audit purposes. This supports the financial tracking rules described earlier in this document.
 
 ---
 
 ## 9. Traceability to Use Cases
 
-| Use Case | Domain Objects Involved |
-|--------|-------------------------|
-| Create Supplier | Supplier |
-| Update Supplier | Supplier |
-| Delete Supplier | Supplier |
-| Create Purchase Order | PurchaseOrder, PurchaseOrderLine, Supplier |
-| Receive Delivery | GoodsReceipt, StockMovement, FinancialTransaction |
-| View Stock Levels | Product, StockMovement |
-| Detect Low Stock | Product |
-| Create Customer Order | CustomerOrder, CustomerOrderLine, Product |
-| Record Financial Transaction | FinancialTransaction |
-| Generate Financial Report | FinancialTransaction |
-| Export Report | ReportExport |
-| View Order History | PurchaseOrder, CustomerOrder |
-| Cancel Customer Order | CustomerOrder, StockMovement, FinancialTransaction |
-| Cancel Purchase Order | PurchaseOrder, FinancialTransaction |
-| Partial Delivery / Backorder | GoodsReceipt, StockMovement, PurchaseOrder |
-| Void / Reverse Financial Transaction | FinancialTransaction |
-| Adjust Stock | StockMovement, Product |
+| Use Case | Domain Objects Involved | Supporting Appendix |
+|--------|-------------------------|---------------------|
+| Create Supplier | Supplier | Appendix A |
+| Update Supplier | Supplier | Appendix A |
+| Delete Supplier | Supplier | Appendix A |
+| Create Purchase Order | PurchaseOrder, PurchaseOrderLine, Supplier | Appendix A, Appendix B |
+| Receive Delivery | GoodsReceipt, StockMovement, FinancialTransaction | Appendix A, Appendix E |
+| View Stock Levels | Product, StockMovement | Appendix A |
+| Detect Low Stock | Product | Appendix A |
+| Create Customer Order | CustomerOrder, CustomerOrderLine, Product | Appendix A, Appendix C, Appendix D |
+| Record Financial Transaction | FinancialTransaction | Appendix A, Appendix H |
+| Generate Financial Report | FinancialTransaction | Appendix A |
+| Export Report | ReportExport | Appendix A |
+| View Order History | PurchaseOrder, CustomerOrder | Appendix A, Appendix B, Appendix C |
+| Cancel Customer Order | CustomerOrder, StockMovement, FinancialTransaction | Appendix A, Appendix C, Appendix H |
+| Cancel Purchase Order | PurchaseOrder, FinancialTransaction | Appendix A, Appendix B, Appendix H |
+| Partial Delivery / Backorder | GoodsReceipt, StockMovement, PurchaseOrder | Appendix A, Appendix B, Appendix F |
+| Void / Reverse Financial Transaction | FinancialTransaction | Appendix A, Appendix H |
+| Adjust Stock | StockMovement, Product | Appendix A, Appendix G |

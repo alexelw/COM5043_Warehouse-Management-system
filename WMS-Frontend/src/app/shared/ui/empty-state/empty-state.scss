@@ -1,0 +1,15 @@
+:host {
+  display: block;
+}
+
+.empty-state {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1.25rem;
+}
+
+.empty-state h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+}

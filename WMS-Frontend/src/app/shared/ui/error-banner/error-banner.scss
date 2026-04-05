@@ -1,0 +1,22 @@
+:host {
+  display: block;
+}
+
+.error-banner {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(180, 67, 54, 0.2);
+  border-radius: var(--radius-md);
+  background: rgba(180, 67, 54, 0.08);
+  color: var(--color-danger);
+}
+
+.error-banner p,
+.error-banner strong {
+  margin: 0;
+}
+
+.error-banner__meta {
+  font-size: 0.85rem;
+}

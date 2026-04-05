@@ -1,0 +1,258 @@
+<section class="page">
+  <app-page-header
+    eyebrow="Orders"
+    title="Customer orders"
+    description="This page now respects the API split: Warehouse Staff can create and cancel orders, while Manager can review order history."
+  >
+    <button
+      actions
+      class="button"
+      type="button"
+      (click)="isManager() ? loadManagerData() : loadWarehouseData()"
+    >
+      Refresh
+    </button>
+  </app-page-header>
+
+  <app-error-banner [error]="loadError()" title="Could not load customer order data" />
+
+  @if (isWarehouseStaff()) {
+    <section class="grid-2">
+      <form
+        class="surface panel-card stack"
+        [formGroup]="createOrderForm"
+        (ngSubmit)="submitCustomerOrder()"
+      >
+        <p class="eyebrow">Create</p>
+        <h2>New customer order</h2>
+
+        <app-error-banner [error]="createError()" title="Could not create customer order" />
+
+        <div class="form-grid">
+          <label class="field">
+            <span>Customer name</span>
+            <input formControlName="customerName" placeholder="Ainsley Tools" />
+          </label>
+
+          <label class="field">
+            <span>Email</span>
+            <input
+              formControlName="customerEmail"
+              type="email"
+              placeholder="orders@ainsley.example"
+            />
+          </label>
+
+          <label class="field">
+            <span>Phone</span>
+            <input formControlName="customerPhone" type="tel" placeholder="0161 555 0190" />
+          </label>
+        </div>
+
+        <div formArrayName="lines" class="stack">
+          @for (line of orderLines.controls; track $index) {
+            <div class="surface panel-card stack" [formGroupName]="$index">
+              <div class="toolbar">
+                <div class="section-copy">
+                  <p class="eyebrow">Line {{ $index + 1 }}</p>
+                  <h2>Order line</h2>
+                </div>
+
+                <button
+                  class="button button--ghost"
+                  type="button"
+                  (click)="removeOrderLine($index)"
+                >
+                  Remove line
+                </button>
+              </div>
+
+              <div class="form-grid">
+                <label class="field">
+                  <span>Product</span>
+                  <select formControlName="productId">
+                    <option value="">Select a product</option>
+                    @for (stockLevel of stockLevels(); track stockLevel.productId) {
+                      <option [value]="stockLevel.productId">
+                        {{ stockLevel.name }} ({{ stockLevel.sku }})
+                      </option>
+                    }
+                  </select>
+                  @if (showLineError($index, 'productId')) {
+                    @for (message of lineErrors($index, 'productId'); track message) {
+                      <p class="field-error">{{ message }}</p>
+                    }
+                  }
+                </label>
+
+                <label class="field">
+                  <span>Quantity</span>
+                  <input formControlName="quantity" type="number" min="1" step="1" />
+                  @if (showLineError($index, 'quantity')) {
+                    @for (message of lineErrors($index, 'quantity'); track message) {
+                      <p class="field-error">{{ message }}</p>
+                    }
+                  }
+                </label>
+
+                <label class="field">
+                  <span>Unit price (GBP)</span>
+                  <input formControlName="unitPriceAmount" type="number" min="0.01" step="0.01" />
+                  @if (showLineError($index, 'unitPriceAmount')) {
+                    @for (message of lineErrors($index, 'unitPriceAmount'); track message) {
+                      <p class="field-error">{{ message }}</p>
+                    }
+                  }
+                </label>
+              </div>
+            </div>
+          }
+        </div>
+
+        @for (message of createServerErrors('Lines', 'lines'); track message) {
+          <p class="form-error">{{ message }}</p>
+        }
+
+        <div class="panel-actions">
+          <button class="button button--ghost" type="button" (click)="addOrderLine()">
+            Add line
+          </button>
+          <button class="button" type="submit" [disabled]="isCreating()">Submit order</button>
+        </div>
+      </form>
+
+      <form
+        class="surface panel-card stack"
+        [formGroup]="cancelOrderForm"
+        (ngSubmit)="submitCancelOrder()"
+      >
+        <p class="eyebrow">Cancel</p>
+        <h2>Cancel by order ID</h2>
+
+        <app-error-banner [error]="cancelError()" title="Could not cancel customer order" />
+
+        <div class="callout">
+          Warehouse Staff can cancel orders, but the current API does not expose an order history
+          list for this role. Enter the order ID from your workflow context.
+        </div>
+
+        <div class="form-grid">
+          <label class="field">
+            <span>Customer order ID</span>
+            <input formControlName="customerOrderId" placeholder="Paste the customer order GUID" />
+            @for (
+              message of cancelServerErrors('customerOrderId', 'CustomerOrderId');
+              track message
+            ) {
+              <p class="field-error">{{ message }}</p>
+            }
+          </label>
+
+          <label class="field">
+            <span>Reason</span>
+            <textarea
+              formControlName="reason"
+              placeholder="Customer requested cancellation"
+            ></textarea>
+            @for (message of cancelServerErrors('Reason', 'reason'); track message) {
+              <p class="field-error">{{ message }}</p>
+            }
+          </label>
+        </div>
+
+        <div class="panel-actions">
+          <button class="button button--secondary" type="submit" [disabled]="isCancelling()">
+            Cancel order
+          </button>
+        </div>
+      </form>
+    </section>
+  } @else if (isManager()) {
+    <section class="surface panel-card stack">
+      <div class="toolbar">
+        <div class="section-copy">
+          <p class="eyebrow">Manager filters</p>
+          <h2>Customer order history</h2>
+        </div>
+
+        <form
+          class="toolbar__group"
+          [formGroup]="managerFiltersForm"
+          (ngSubmit)="loadManagerData()"
+        >
+          <label class="field">
+            <span>Status</span>
+            <select formControlName="status">
+              <option value="">All statuses</option>
+              @for (status of customerOrderStatuses; track status) {
+                <option [value]="status">{{ status }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="field">
+            <span>From</span>
+            <input formControlName="from" type="date" />
+          </label>
+
+          <label class="field">
+            <span>To</span>
+            <input formControlName="to" type="date" />
+          </label>
+
+          <div class="panel-actions panel-actions--end">
+            <button class="button button--ghost" type="submit">Apply</button>
+          </div>
+        </form>
+      </div>
+
+      @if (managerFiltersForm.hasError('dateRange')) {
+        <p class="form-error">From date must be on or before To date.</p>
+      }
+    </section>
+
+    <article class="surface panel-card stack">
+      <p class="eyebrow">Recent orders</p>
+      <h2>Customer order list</h2>
+
+      @if (isLoading()) {
+        <app-loading-state label="Loading customer orders..." />
+      } @else if (!customerOrders().length) {
+        <app-empty-state
+          title="No customer orders found"
+          description="Try broader filters or wait for Warehouse Staff to create the first order."
+        />
+      } @else {
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Created</th>
+              <th>Lines</th>
+              <th>Total</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (order of customerOrders(); track order.customerOrderId) {
+              <tr>
+                <td>{{ order.customerOrderId }}</td>
+                <td>{{ formatCreatedAt(order.createdAt) }}</td>
+                <td>{{ order.lines.length }}</td>
+                <td>{{ formatTotal(order) }}</td>
+                <td>
+                  <app-status-badge [label]="order.status" [tone]="statusTone(order.status)" />
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </article>
+  } @else {
+    <app-empty-state
+      title="Customer order actions are role-specific"
+      description="Switch to Warehouse Staff to create or cancel orders, or to Manager to review order history."
+    />
+  }
+</section>
