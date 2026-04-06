@@ -28,6 +28,57 @@ public class FinancialTransaction
   {
   }
 
+  private FinancialTransaction(
+      Guid transactionId,
+      FinancialTransactionType type,
+      Money amount,
+      FinancialTransactionStatus status,
+      ReferenceType referenceType,
+      Guid referenceId,
+      DateTime occurredAt,
+      Guid? reversalOfTransactionId)
+  {
+    if (transactionId == Guid.Empty)
+    {
+      throw new DomainRuleViolationException("Transaction id is required.");
+    }
+
+    if (!Enum.IsDefined(type))
+    {
+      throw new DomainRuleViolationException("Financial transaction type is invalid.");
+    }
+
+    ArgumentNullException.ThrowIfNull(amount);
+    if (amount.IsZero)
+    {
+      throw new DomainRuleViolationException("Transaction amount must be greater than zero.");
+    }
+
+    if (!Enum.IsDefined(status))
+    {
+      throw new DomainRuleViolationException("Financial transaction status is invalid.");
+    }
+
+    if (!Enum.IsDefined(referenceType))
+    {
+      throw new DomainRuleViolationException("Reference type is invalid.");
+    }
+
+    if (referenceId == Guid.Empty)
+    {
+      throw new DomainRuleViolationException("Reference id is required.");
+    }
+
+    this.TransactionId = transactionId;
+    this.Type = type;
+    this.Amount = amount;
+    this.Status = status;
+    this.ReferenceType = referenceType;
+    this.ReferenceId = referenceId;
+    this.OccurredAt = occurredAt;
+    this.ReversalOfTransactionId = reversalOfTransactionId;
+  }
+
   public Guid TransactionId { get; private set; }
 
   public FinancialTransactionType Type { get; private set; }
@@ -100,56 +151,5 @@ public class FinancialTransaction
         this.ReferenceId,
         occurredAt ?? DateTime.UtcNow,
         this.TransactionId);
-  }
-
-  private FinancialTransaction(
-      Guid transactionId,
-      FinancialTransactionType type,
-      Money amount,
-      FinancialTransactionStatus status,
-      ReferenceType referenceType,
-      Guid referenceId,
-      DateTime occurredAt,
-      Guid? reversalOfTransactionId)
-  {
-    if (transactionId == Guid.Empty)
-    {
-      throw new DomainRuleViolationException("Transaction id is required.");
-    }
-
-    if (!Enum.IsDefined(type))
-    {
-      throw new DomainRuleViolationException("Financial transaction type is invalid.");
-    }
-
-    ArgumentNullException.ThrowIfNull(amount);
-    if (amount.IsZero)
-    {
-      throw new DomainRuleViolationException("Transaction amount must be greater than zero.");
-    }
-
-    if (!Enum.IsDefined(status))
-    {
-      throw new DomainRuleViolationException("Financial transaction status is invalid.");
-    }
-
-    if (!Enum.IsDefined(referenceType))
-    {
-      throw new DomainRuleViolationException("Reference type is invalid.");
-    }
-
-    if (referenceId == Guid.Empty)
-    {
-      throw new DomainRuleViolationException("Reference id is required.");
-    }
-
-    this.TransactionId = transactionId;
-    this.Type = type;
-    this.Amount = amount;
-    this.Status = status;
-    this.ReferenceType = referenceType;
-    this.ReferenceId = referenceId;
-    this.OccurredAt = occurredAt;
-    this.ReversalOfTransactionId = reversalOfTransactionId;
   }
 }

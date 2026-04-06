@@ -444,7 +444,6 @@ export class FinanceReportsPage {
   }
 
   private normalizeOptionalValue(value: string): string | null {
-    const trimmedValue = value.trim();
-    return trimmedValue ? trimmedValue : null;
+    return value.trim() || null;
   }
 }

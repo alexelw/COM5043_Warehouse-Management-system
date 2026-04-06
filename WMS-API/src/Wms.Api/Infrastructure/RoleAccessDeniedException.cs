@@ -2,7 +2,7 @@ namespace Wms.Api.Infrastructure;
 
 using Wms.Domain.Enums;
 
-internal sealed class RoleAccessDeniedException : Exception
+public sealed class RoleAccessDeniedException : Exception
 {
   public RoleAccessDeniedException(UserRole selectedRole, IReadOnlyList<UserRole> allowedRoles)
       : base(CreateMessage(selectedRole, allowedRoles))

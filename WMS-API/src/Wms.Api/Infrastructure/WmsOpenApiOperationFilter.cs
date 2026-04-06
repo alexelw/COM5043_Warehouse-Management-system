@@ -8,7 +8,9 @@ using Wms.Domain.Enums;
 
 internal sealed class WmsOpenApiOperationFilter : IOperationFilter
 {
-  private static readonly IReadOnlyDictionary<string, UserRole[]> OperationRoles =
+  private const string StatusParameterName = "status";
+
+  private static readonly Dictionary<string, UserRole[]> OperationRoles =
       new Dictionary<string, UserRole[]>(StringComparer.Ordinal)
       {
         ["POST api/suppliers"] = new[] { UserRole.Manager },
@@ -99,14 +101,14 @@ internal sealed class WmsOpenApiOperationFilter : IOperationFilter
     {
       case "GetPurchaseOrders":
       case "GetSupplierPurchaseOrders":
-        ApplyStringEnumParameter(operation, "status", Enum.GetNames<PurchaseOrderStatus>());
+        ApplyStringEnumParameter(operation, StatusParameterName, Enum.GetNames<PurchaseOrderStatus>());
         break;
       case "GetCustomerOrders":
-        ApplyStringEnumParameter(operation, "status", Enum.GetNames<CustomerOrderStatus>());
+        ApplyStringEnumParameter(operation, StatusParameterName, Enum.GetNames<CustomerOrderStatus>());
         break;
       case "GetTransactions":
         ApplyStringEnumParameter(operation, "type", Enum.GetNames<FinancialTransactionType>());
-        ApplyStringEnumParameter(operation, "status", Enum.GetNames<FinancialTransactionStatus>());
+        ApplyStringEnumParameter(operation, StatusParameterName, Enum.GetNames<FinancialTransactionStatus>());
         break;
       case "GetReportExports":
         ApplyStringEnumParameter(operation, "reportType", Enum.GetNames<ReportType>());
@@ -118,14 +120,14 @@ internal sealed class WmsOpenApiOperationFilter : IOperationFilter
     {
       case "GET api/purchase-orders":
       case "GET api/suppliers/{supplierId}/purchase-orders":
-        ApplyStringEnumParameter(operation, "status", Enum.GetNames<PurchaseOrderStatus>());
+        ApplyStringEnumParameter(operation, StatusParameterName, Enum.GetNames<PurchaseOrderStatus>());
         break;
       case "GET api/customer-orders":
-        ApplyStringEnumParameter(operation, "status", Enum.GetNames<CustomerOrderStatus>());
+        ApplyStringEnumParameter(operation, StatusParameterName, Enum.GetNames<CustomerOrderStatus>());
         break;
       case "GET api/transactions":
         ApplyStringEnumParameter(operation, "type", Enum.GetNames<FinancialTransactionType>());
-        ApplyStringEnumParameter(operation, "status", Enum.GetNames<FinancialTransactionStatus>());
+        ApplyStringEnumParameter(operation, StatusParameterName, Enum.GetNames<FinancialTransactionStatus>());
         break;
       case "GET api/reports/exports":
         ApplyStringEnumParameter(operation, "reportType", Enum.GetNames<ReportType>());
@@ -189,7 +191,7 @@ internal sealed class WmsOpenApiOperationFilter : IOperationFilter
     parameter.Description = $"Allowed values: {string.Join(", ", values)}.";
   }
 
-  private static IList<IOpenApiAny> CreateStringEnum(params string[] values)
+  private static List<IOpenApiAny> CreateStringEnum(params string[] values)
   {
     return values.Select(static value => (IOpenApiAny)new OpenApiString(value)).ToList();
   }
@@ -213,14 +215,13 @@ internal sealed class WmsOpenApiOperationFilter : IOperationFilter
 
   private static IReadOnlyList<UserRole>? ResolveRoles(string? operationKey)
   {
-    if (string.IsNullOrWhiteSpace(operationKey))
+    if (string.IsNullOrWhiteSpace(operationKey) ||
+        !OperationRoles.TryGetValue(operationKey, out var roles))
     {
       return null;
     }
 
-    return OperationRoles.TryGetValue(operationKey, out var roles)
-        ? roles
-        : null;
+    return roles;
   }
 
   private static string BuildOperationKey(OperationFilterContext context)

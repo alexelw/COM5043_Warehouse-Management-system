@@ -30,23 +30,28 @@ public class DependencyInjectionTests
     using var scope = provider.CreateScope();
     var serviceProvider = scope.ServiceProvider;
 
-    _ = serviceProvider.GetRequiredService<ISupplierService>();
-    _ = serviceProvider.GetRequiredService<IInventoryService>();
-    _ = serviceProvider.GetRequiredService<IPurchaseOrderService>();
-    _ = serviceProvider.GetRequiredService<IOrderService>();
-    _ = serviceProvider.GetRequiredService<IFinanceService>();
-    _ = serviceProvider.GetRequiredService<IReportingService>();
-    _ = serviceProvider.GetRequiredService<ISupplierRepository>();
-    _ = serviceProvider.GetRequiredService<IProductRepository>();
-    _ = serviceProvider.GetRequiredService<IPurchaseOrderRepository>();
-    _ = serviceProvider.GetRequiredService<IGoodsReceiptRepository>();
-    _ = serviceProvider.GetRequiredService<ICustomerRepository>();
-    _ = serviceProvider.GetRequiredService<ICustomerOrderRepository>();
-    _ = serviceProvider.GetRequiredService<IStockMovementRepository>();
-    _ = serviceProvider.GetRequiredService<ITransactionRepository>();
-    _ = serviceProvider.GetRequiredService<IReportExportRepository>();
-    _ = serviceProvider.GetRequiredService<IUnitOfWork>();
-    _ = serviceProvider.GetRequiredService<IReportExporter>();
+    var resolvedServices = new object?[]
+    {
+      serviceProvider.GetRequiredService<ISupplierService>(),
+      serviceProvider.GetRequiredService<IInventoryService>(),
+      serviceProvider.GetRequiredService<IPurchaseOrderService>(),
+      serviceProvider.GetRequiredService<IOrderService>(),
+      serviceProvider.GetRequiredService<IFinanceService>(),
+      serviceProvider.GetRequiredService<IReportingService>(),
+      serviceProvider.GetRequiredService<ISupplierRepository>(),
+      serviceProvider.GetRequiredService<IProductRepository>(),
+      serviceProvider.GetRequiredService<IPurchaseOrderRepository>(),
+      serviceProvider.GetRequiredService<IGoodsReceiptRepository>(),
+      serviceProvider.GetRequiredService<ICustomerRepository>(),
+      serviceProvider.GetRequiredService<ICustomerOrderRepository>(),
+      serviceProvider.GetRequiredService<IStockMovementRepository>(),
+      serviceProvider.GetRequiredService<ITransactionRepository>(),
+      serviceProvider.GetRequiredService<IReportExportRepository>(),
+      serviceProvider.GetRequiredService<IUnitOfWork>(),
+      serviceProvider.GetRequiredService<IReportExporter>(),
+    };
+
+    Assert.All(resolvedServices, Assert.NotNull);
   }
 
   private static IConfiguration BuildConfiguration()

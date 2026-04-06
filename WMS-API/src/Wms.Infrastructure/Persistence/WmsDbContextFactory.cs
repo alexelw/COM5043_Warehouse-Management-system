@@ -58,14 +58,9 @@ public class WmsDbContextFactory : IDesignTimeDbContextFactory<WmsDbContext>
             Path.Combine(currentDirectory, "WMS-API", "src", "Wms.Api"),
         };
 
-    foreach (var candidate in candidates)
-    {
-      if (File.Exists(Path.Combine(candidate, "appsettings.json")))
-      {
-        return candidate;
-      }
-    }
-
-    return currentDirectory;
+    return candidates
+        .Where(candidate => File.Exists(Path.Combine(candidate, "appsettings.json")))
+        .FirstOrDefault()
+        ?? currentDirectory;
   }
 }

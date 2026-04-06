@@ -12,6 +12,8 @@ namespace Wms.Application.Tests;
 
 public sealed class ApiExceptionHandlingMiddlewareTests
 {
+  private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
+
   [Fact]
   public async Task InvokeAsync_WhenValidationFails_ReturnsStructuredBadRequest()
   {
@@ -104,9 +106,7 @@ public sealed class ApiExceptionHandlingMiddlewareTests
   private static async Task<ErrorResponse> ReadResponseAsync(HttpContext context)
   {
     context.Response.Body.Position = 0;
-    return (await JsonSerializer.DeserializeAsync<ErrorResponse>(
-        context.Response.Body,
-        new JsonSerializerOptions(JsonSerializerDefaults.Web)))!;
+    return (await JsonSerializer.DeserializeAsync<ErrorResponse>(context.Response.Body, SerializerOptions))!;
   }
 
   private sealed class TestHostEnvironment : IHostEnvironment

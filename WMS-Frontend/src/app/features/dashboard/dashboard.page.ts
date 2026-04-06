@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { toApiErrorState } from '../../core/http/api-helpers';
 import { HealthResponse } from '../../core/models/api.types';
@@ -23,12 +30,7 @@ interface DashboardAction {
 
 @Component({
   selector: 'app-dashboard-page',
-  imports: [
-    RouterLink,
-    ErrorBannerComponent,
-    LoadingStateComponent,
-    PageHeaderComponent,
-  ],
+  imports: [RouterLink, ErrorBannerComponent, LoadingStateComponent, PageHeaderComponent],
   templateUrl: './dashboard.page.html',
   styleUrl: './dashboard.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

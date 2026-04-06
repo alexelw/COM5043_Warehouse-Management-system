@@ -158,6 +158,11 @@ public class PurchaseOrder : LineCollectionDocument<PurchaseOrderLine>
   {
     ArgumentNullException.ThrowIfNull(lines);
 
+    return NormalizeGroupedLines(lines);
+  }
+
+  private static IEnumerable<PurchaseOrderLine> NormalizeGroupedLines(IEnumerable<PurchaseOrderLine> lines)
+  {
     foreach (var lineGroup in lines.GroupBy(line => line.ProductId))
     {
       var normalizedLine = lineGroup.First();

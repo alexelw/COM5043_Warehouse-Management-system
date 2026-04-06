@@ -91,7 +91,7 @@ public class ContractValidationTests
     Assert.Contains(results, result => result.MemberNames.Contains(nameof(request.SupplierId)));
   }
 
-  private static IReadOnlyList<ValidationResult> Validate(object model)
+  private static List<ValidationResult> Validate(object model)
   {
     var results = new List<ValidationResult>();
     _ = Validator.TryValidateObject(

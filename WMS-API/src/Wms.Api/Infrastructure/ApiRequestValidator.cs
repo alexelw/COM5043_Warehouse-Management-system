@@ -7,6 +7,8 @@ namespace Wms.Api.Infrastructure
 
   internal static class ApiRequestValidator
   {
+    private static readonly IReadOnlyList<string> EmptyMemberNames = new[] { string.Empty };
+
     public static void ValidateAndThrow(object model)
     {
       ArgumentNullException.ThrowIfNull(model);
@@ -29,60 +31,105 @@ namespace Wms.Api.Infrastructure
         IDictionary<string, List<string>> errors,
         string? prefix)
     {
+      AddValidationErrors(model, errors, prefix);
+      ValidateNestedProperties(model, errors, prefix);
+    }
+
+    private static void AddValidationErrors(
+        object model,
+        IDictionary<string, List<string>> errors,
+        string? prefix)
+    {
+      foreach (var validationResult in GetValidationResults(model))
+      {
+        AddValidationError(validationResult, errors, prefix);
+      }
+    }
+
+    private static IReadOnlyList<ValidationResult> GetValidationResults(object model)
+    {
       var validationContext = new ValidationContext(model);
       var validationResults = new List<ValidationResult>();
       _ = Validator.TryValidateObject(model, validationContext, validationResults, validateAllProperties: true);
+      return validationResults;
+    }
 
-      foreach (var validationResult in validationResults)
+    private static void AddValidationError(
+        ValidationResult validationResult,
+        IDictionary<string, List<string>> errors,
+        string? prefix)
+    {
+      var memberNames = validationResult.MemberNames.Any()
+          ? validationResult.MemberNames
+          : EmptyMemberNames;
+
+      foreach (var memberName in memberNames)
       {
-        var memberNames = validationResult.MemberNames.Any()
-            ? validationResult.MemberNames
-            : new[] { string.Empty };
+        var field = CombinePath(prefix, memberName);
+        AddError(errors, field, validationResult.ErrorMessage ?? "Validation failed.");
+      }
+    }
 
-        foreach (var memberName in memberNames)
+    private static void ValidateNestedProperties(
+        object model,
+        IDictionary<string, List<string>> errors,
+        string? prefix)
+    {
+      foreach (var property in GetValidatableProperties(model.GetType()))
+      {
+        var value = property.GetValue(model);
+        if (ShouldSkipValue(value))
         {
-          var field = CombinePath(prefix, memberName);
-          AddError(errors, field, validationResult.ErrorMessage ?? "Validation failed.");
+          continue;
         }
+
+        ValidateNestedValue(value!, errors, CombinePath(prefix, property.Name));
+      }
+    }
+
+    private static IEnumerable<PropertyInfo> GetValidatableProperties(Type type)
+    {
+      return type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+          .Where(static property => property.GetIndexParameters().Length == 0);
+    }
+
+    private static bool ShouldSkipValue(object? value)
+    {
+      return value is null or string;
+    }
+
+    private static void ValidateNestedValue(
+        object value,
+        IDictionary<string, List<string>> errors,
+        string propertyPath)
+    {
+      if (value is IEnumerable enumerable)
+      {
+        ValidateEnumerableItems(enumerable, errors, propertyPath);
+        return;
       }
 
-      foreach (var property in model.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
+      if (!IsSimpleType(value.GetType()))
       {
-        if (property.GetIndexParameters().Length > 0)
+        ValidateObject(value, errors, propertyPath);
+      }
+    }
+
+    private static void ValidateEnumerableItems(
+        IEnumerable enumerable,
+        IDictionary<string, List<string>> errors,
+        string propertyPath)
+    {
+      var index = 0;
+
+      foreach (var item in enumerable)
+      {
+        if (item is not null && !IsSimpleType(item.GetType()))
         {
-          continue;
+          ValidateObject(item, errors, $"{propertyPath}[{index}]");
         }
 
-        var value = property.GetValue(model);
-        if (value is null || value is string)
-        {
-          continue;
-        }
-
-        var propertyPath = CombinePath(prefix, property.Name);
-
-        if (value is IEnumerable enumerable)
-        {
-          var index = 0;
-          foreach (var item in enumerable)
-          {
-            if (item is null || IsSimpleType(item.GetType()))
-            {
-              index++;
-              continue;
-            }
-
-            ValidateObject(item, errors, $"{propertyPath}[{index}]");
-            index++;
-          }
-
-          continue;
-        }
-
-        if (!IsSimpleType(value.GetType()))
-        {
-          ValidateObject(value, errors, propertyPath);
-        }
+        index++;
       }
     }
 

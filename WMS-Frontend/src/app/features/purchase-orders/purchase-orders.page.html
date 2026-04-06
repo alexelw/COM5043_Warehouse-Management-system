@@ -405,11 +405,19 @@
         </div>
 
         <div class="panel-actions">
-          <button class="button button--ghost" type="button" (click)="loadPurchaseOrderForReceipt()">
+          <button
+            class="button button--ghost"
+            type="button"
+            (click)="loadPurchaseOrderForReceipt()"
+          >
             Load order
           </button>
           @if (lastCreatedPurchaseOrder()) {
-            <button class="button button--ghost" type="button" (click)="useLastCreatedPurchaseOrder()">
+            <button
+              class="button button--ghost"
+              type="button"
+              (click)="useLastCreatedPurchaseOrder()"
+            >
               Use latest order
             </button>
           }
@@ -446,7 +454,9 @@
                   <span>Product</span>
                   <select formControlName="productId" [disabled]="!hasReceiptProductOptions()">
                     <option value="">
-                      {{ hasReceiptProductOptions() ? 'Select a product' : 'No products available' }}
+                      {{
+                        hasReceiptProductOptions() ? 'Select a product' : 'No products available'
+                      }}
                     </option>
                     @for (option of receiptProductOptions(); track option.productId) {
                       <option [value]="option.productId">

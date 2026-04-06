@@ -1,5 +1,9 @@
 <section class="page">
-  <app-page-header eyebrow="Administrator" title="Finance and reports" description="Transactions and exports">
+  <app-page-header
+    eyebrow="Administrator"
+    title="Finance and reports"
+    description="Transactions and exports"
+  >
     <button actions class="button button--ghost" type="button" (click)="refreshAll()">
       Refresh
     </button>
@@ -222,9 +226,7 @@
 
         <app-error-banner [error]="actionError()" title="Could not update transaction" />
 
-        <div class="callout">
-          Use a transaction from the table or enter the ID manually.
-        </div>
+        <div class="callout">Use a transaction from the table or enter the ID manually.</div>
 
         <div class="form-grid">
           <label class="field">

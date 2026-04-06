@@ -1,6 +1,6 @@
 namespace Wms.Api.Infrastructure;
 
-internal sealed class RequestValidationException : Exception
+public sealed class RequestValidationException : Exception
 {
   public RequestValidationException(
       IReadOnlyDictionary<string, IReadOnlyList<string>> errors,

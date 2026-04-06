@@ -6,7 +6,7 @@ namespace Wms.Infrastructure.Reporting;
 
 public sealed class FileReportExporter : IReportExporter
 {
-  private readonly IReadOnlyDictionary<ReportFormat, IFinancialReportFormatter> _formatters;
+  private readonly Dictionary<ReportFormat, IFinancialReportFormatter> _formatters;
 
   public FileReportExporter()
       : this(new IFinancialReportFormatter[]

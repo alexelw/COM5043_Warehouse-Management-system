@@ -22,7 +22,11 @@ export class TopNavComponent {
 
   protected readonly selectedRole = this.roleService.selectedRole;
   protected readonly navItems: readonly NavItem[] = [
-    { label: 'Dashboard', path: '/dashboard', roles: ['WarehouseStaff', 'Manager', 'Administrator'] },
+    {
+      label: 'Dashboard',
+      path: '/dashboard',
+      roles: ['WarehouseStaff', 'Manager', 'Administrator'],
+    },
     { label: 'Suppliers', path: '/suppliers', roles: ['Manager'] },
     { label: 'Inventory', path: '/inventory', roles: ['WarehouseStaff', 'Manager'] },
     { label: 'Purchase Orders', path: '/purchase-orders', roles: ['WarehouseStaff', 'Manager'] },

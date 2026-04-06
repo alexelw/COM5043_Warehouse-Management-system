@@ -15,13 +15,10 @@ internal sealed class TextFinancialReportFormatter : FinancialReportFormatterBas
 
     return string.Join(
         Environment.NewLine,
-        new[]
-        {
-            "Financial Report",
-            $"From: {FormatDate(report.From)}",
-            $"To: {FormatDate(report.To)}",
-            $"Total sales: {report.TotalSales.Currency} {report.TotalSales.Amount:0.00}",
-            $"Total expenses: {report.TotalExpenses.Currency} {report.TotalExpenses.Amount:0.00}",
-        });
+        "Financial Report",
+        $"From: {FormatDate(report.From)}",
+        $"To: {FormatDate(report.To)}",
+        $"Total sales: {report.TotalSales.Currency} {report.TotalSales.Amount:0.00}",
+        $"Total expenses: {report.TotalExpenses.Currency} {report.TotalExpenses.Amount:0.00}");
   }
 }

@@ -46,7 +46,12 @@
               }
             }
             @for (
-              message of createServerErrors('Customer.Name', 'customer.name', 'Name', 'customerName');
+              message of createServerErrors(
+                'Customer.Name',
+                'customer.name',
+                'Name',
+                'customerName'
+              );
               track message
             ) {
               <p class="field-error">{{ message }}</p>
@@ -66,7 +71,12 @@
               }
             }
             @for (
-              message of createServerErrors('Customer.Email', 'customer.email', 'Email', 'customerEmail');
+              message of createServerErrors(
+                'Customer.Email',
+                'customer.email',
+                'Email',
+                'customerEmail'
+              );
               track message
             ) {
               <p class="field-error">{{ message }}</p>
@@ -82,7 +92,12 @@
               }
             }
             @for (
-              message of createServerErrors('Customer.Phone', 'customer.phone', 'Phone', 'customerPhone');
+              message of createServerErrors(
+                'Customer.Phone',
+                'customer.phone',
+                'Phone',
+                'customerPhone'
+              );
               track message
             ) {
               <p class="field-error">{{ message }}</p>
@@ -91,9 +106,7 @@
         </div>
 
         @if (!hasAvailableStock()) {
-          <p class="form-error">
-            No stock is currently available to create a customer order.
-          </p>
+          <p class="form-error">No stock is currently available to create a customer order.</p>
         }
 
         <div formArrayName="lines" class="stack">
@@ -382,11 +395,11 @@
       <p class="eyebrow">Recent orders</p>
       <h2>Customer order list</h2>
 
-        @if (isLoading()) {
-          <app-loading-state label="Loading customer orders..." />
-        } @else if (!customerOrders().length) {
-          <app-empty-state title="No customer orders found" />
-        } @else {
+      @if (isLoading()) {
+        <app-loading-state label="Loading customer orders..." />
+      } @else if (!customerOrders().length) {
+        <app-empty-state title="No customer orders found" />
+      } @else {
         <table class="table">
           <thead>
             <tr>

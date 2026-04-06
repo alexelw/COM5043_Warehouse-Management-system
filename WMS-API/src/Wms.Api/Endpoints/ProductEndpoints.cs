@@ -11,19 +11,21 @@ namespace Wms.Api.Endpoints
 
   internal static class ProductEndpoints
   {
+    private const string QuantityOnHandSortField = "quantityOnHand";
+
     private static readonly IReadOnlyDictionary<string, Func<ProductResult, IComparable?>> ProductSortSelectors =
         new Dictionary<string, Func<ProductResult, IComparable?>>(StringComparer.OrdinalIgnoreCase)
         {
           ["name"] = product => product.Name,
           ["sku"] = product => product.Sku,
-          ["quantityOnHand"] = product => product.QuantityOnHand,
+          [QuantityOnHandSortField] = product => product.QuantityOnHand,
           ["reorderThreshold"] = product => product.ReorderThreshold,
         };
 
     private static readonly IReadOnlyDictionary<string, Func<StockLevelResult, IComparable?>> StockLevelSortSelectors =
         new Dictionary<string, Func<StockLevelResult, IComparable?>>(StringComparer.OrdinalIgnoreCase)
         {
-          ["quantityOnHand"] = product => product.QuantityOnHand,
+          [QuantityOnHandSortField] = product => product.QuantityOnHand,
           ["sku"] = product => product.Sku,
           ["name"] = product => product.Name,
         };
@@ -31,7 +33,7 @@ namespace Wms.Api.Endpoints
     private static readonly IReadOnlyDictionary<string, Func<ProductResult, IComparable?>> LowStockSortSelectors =
         new Dictionary<string, Func<ProductResult, IComparable?>>(StringComparer.OrdinalIgnoreCase)
         {
-          ["quantityOnHand"] = product => product.QuantityOnHand,
+          [QuantityOnHandSortField] = product => product.QuantityOnHand,
           ["reorderThreshold"] = product => product.ReorderThreshold,
           ["name"] = product => product.Name,
         };
@@ -193,7 +195,7 @@ namespace Wms.Api.Endpoints
           order,
           page ?? 1,
           pageSize ?? 50,
-          defaultSort: "quantityOnHand",
+          defaultSort: QuantityOnHandSortField,
           defaultDescending: true,
           StockLevelSortSelectors);
 
@@ -216,7 +218,7 @@ namespace Wms.Api.Endpoints
           order,
           page ?? 1,
           pageSize ?? 50,
-          defaultSort: "quantityOnHand",
+          defaultSort: QuantityOnHandSortField,
           defaultDescending: false,
           LowStockSortSelectors);
 

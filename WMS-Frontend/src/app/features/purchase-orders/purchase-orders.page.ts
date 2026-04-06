@@ -202,7 +202,10 @@ export class PurchaseOrdersPage {
         const normalizedPurchaseOrderId = purchaseOrderId.trim();
         const loadedPurchaseOrder = this.loadedReceiptPurchaseOrder();
 
-        if (loadedPurchaseOrder && loadedPurchaseOrder.purchaseOrderId !== normalizedPurchaseOrderId) {
+        if (
+          loadedPurchaseOrder &&
+          loadedPurchaseOrder.purchaseOrderId !== normalizedPurchaseOrderId
+        ) {
           this.loadedReceiptPurchaseOrder.set(null);
           this.receipts.set([]);
           this.selectedPurchaseOrderId.set(null);
@@ -303,10 +306,12 @@ export class PurchaseOrdersPage {
 
     forkJoin({
       stockLevels: this.inventoryApi.getStockLevels({ sort: 'name', order: 'asc' }),
-      openPurchaseOrders: this.purchaseOrdersApi.getOpenPurchaseOrders({
-        sort: 'createdAt',
-        order: 'desc',
-      }).pipe(catchError(() => of<readonly PurchaseOrderResponse[]>([]))),
+      openPurchaseOrders: this.purchaseOrdersApi
+        .getOpenPurchaseOrders({
+          sort: 'createdAt',
+          order: 'desc',
+        })
+        .pipe(catchError(() => of<readonly PurchaseOrderResponse[]>([]))),
     })
       .pipe(
         finalize(() => {
@@ -358,7 +363,9 @@ export class PurchaseOrdersPage {
     }
 
     const formValue = this.createPurchaseOrderForm.getRawValue();
-    const availableProductIds = new Set(this.availableProducts().map((product) => product.productId));
+    const availableProductIds = new Set(
+      this.availableProducts().map((product) => product.productId),
+    );
     const hasProductFromWrongSupplier = formValue.lines.some(
       (line) => !availableProductIds.has(line.productId),
     );
@@ -409,10 +416,11 @@ export class PurchaseOrdersPage {
       return;
     }
 
-    const reason = window.prompt(
-      `Enter a cancellation reason for ${purchaseOrder.purchaseOrderId}:`,
-      'No longer required',
-    );
+    const reason =
+      globalThis.prompt?.(
+        `Enter a cancellation reason for ${purchaseOrder.purchaseOrderId}:`,
+        'No longer required',
+      ) ?? null;
 
     if (!reason?.trim()) {
       return;
@@ -663,7 +671,7 @@ export class PurchaseOrdersPage {
 
     return Boolean(
       (purchaseOrder.status === 'Pending' || purchaseOrder.status === 'PartiallyReceived') &&
-        this.receivableLines().length,
+      this.receivableLines().length,
     );
   }
 
@@ -673,7 +681,10 @@ export class PurchaseOrdersPage {
       return null;
     }
 
-    return this.receivableLines().find((line) => line.productId === productId)?.quantityOutstanding ?? null;
+    return (
+      this.receivableLines().find((line) => line.productId === productId)?.quantityOutstanding ??
+      null
+    );
   }
 
   protected purchaseOrderLineErrors(
@@ -765,7 +776,9 @@ export class PurchaseOrdersPage {
   }
 
   private syncPurchaseOrderLinesWithAvailableProducts(): void {
-    const availableProductIds = new Set(this.availableProducts().map((product) => product.productId));
+    const availableProductIds = new Set(
+      this.availableProducts().map((product) => product.productId),
+    );
 
     for (let index = 0; index < this.purchaseOrderLines.length; index += 1) {
       const group = this.lineGroup(index);

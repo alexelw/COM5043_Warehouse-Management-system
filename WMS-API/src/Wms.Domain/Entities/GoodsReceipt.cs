@@ -42,6 +42,11 @@ public class GoodsReceipt : LineCollectionDocument<GoodsReceiptLine>
   {
     ArgumentNullException.ThrowIfNull(lines);
 
+    return NormalizeGroupedLines(lines);
+  }
+
+  private static IEnumerable<GoodsReceiptLine> NormalizeGroupedLines(IEnumerable<GoodsReceiptLine> lines)
+  {
     foreach (var lineGroup in lines.GroupBy(line => line.ProductId))
     {
       var normalizedLine = lineGroup.First();

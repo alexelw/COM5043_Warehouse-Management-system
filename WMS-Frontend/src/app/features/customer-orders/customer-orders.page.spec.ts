@@ -42,7 +42,9 @@ describe('CustomerOrdersPage', () => {
       ]);
 
     httpTestingController
-      .expectOne((request) => request.method === 'GET' && request.url === '/api/customer-orders/open')
+      .expectOne(
+        (request) => request.method === 'GET' && request.url === '/api/customer-orders/open',
+      )
       .flush([]);
 
     fixture.detectChanges();
@@ -127,7 +129,9 @@ describe('CustomerOrdersPage', () => {
       ]);
 
     httpTestingController
-      .expectOne((request) => request.method === 'GET' && request.url === '/api/customer-orders/open')
+      .expectOne(
+        (request) => request.method === 'GET' && request.url === '/api/customer-orders/open',
+      )
       .flush([
         {
           customerOrderId: '33333333-3333-3333-3333-333333333333',

@@ -31,7 +31,9 @@ export class CustomerOrdersApiService {
     });
   }
 
-  getOpenCustomerOrders(query: CustomerOrderQuery = {}): Observable<readonly CustomerOrderResponse[]> {
+  getOpenCustomerOrders(
+    query: CustomerOrderQuery = {},
+  ): Observable<readonly CustomerOrderResponse[]> {
     return this.http.get<readonly CustomerOrderResponse[]>('/api/customer-orders/open', {
       params: buildHttpParams(query),
     });

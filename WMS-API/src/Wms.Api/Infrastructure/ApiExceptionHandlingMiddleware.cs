@@ -8,6 +8,12 @@ namespace Wms.Api.Infrastructure
 
   internal sealed class ApiExceptionHandlingMiddleware
   {
+    private const string ValidationFailedCode = "validation_failed";
+    private const string ForbiddenCode = "forbidden";
+    private const string NotFoundCode = "not_found";
+    private const string ConflictCode = "conflict";
+    private const string ServerErrorCode = "server_error";
+
     private static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> EmptyErrors =
         new Dictionary<string, IReadOnlyList<string>>();
 
@@ -49,67 +55,67 @@ namespace Wms.Api.Infrastructure
       {
         RequestValidationException validationException => (
             StatusCodes.Status400BadRequest,
-            "validation_failed",
+            ValidationFailedCode,
             validationException.Message,
             validationException.Errors),
         RoleAccessDeniedException roleAccessDeniedException => (
             StatusCodes.Status403Forbidden,
-            "forbidden",
+            ForbiddenCode,
             roleAccessDeniedException.Message,
             EmptyErrors),
         ValidationException validationException => (
             StatusCodes.Status400BadRequest,
-            "validation_failed",
+            ValidationFailedCode,
             validationException.Message,
             EmptyErrors),
         NotFoundException notFoundException => (
             StatusCodes.Status404NotFound,
-            "not_found",
+            NotFoundCode,
             notFoundException.Message,
             EmptyErrors),
         ConflictException conflictException => (
             StatusCodes.Status409Conflict,
-            "conflict",
+            ConflictCode,
             conflictException.Message,
             EmptyErrors),
         InvalidStatusTransitionException statusTransitionException => (
             StatusCodes.Status409Conflict,
-            "conflict",
+            ConflictCode,
             statusTransitionException.Message,
             EmptyErrors),
         InsufficientStockException insufficientStockException => (
             StatusCodes.Status409Conflict,
-            "conflict",
+            ConflictCode,
             insufficientStockException.Message,
             EmptyErrors),
         DomainRuleViolationException domainRuleViolationException => (
             StatusCodes.Status409Conflict,
-            "conflict",
+            ConflictCode,
             domainRuleViolationException.Message,
             EmptyErrors),
         DbUpdateException dbUpdateException => (
             StatusCodes.Status409Conflict,
-            "conflict",
+            ConflictCode,
             this.GetDbUpdateMessage(dbUpdateException),
             EmptyErrors),
         BadHttpRequestException badHttpRequestException => (
             StatusCodes.Status400BadRequest,
-            "validation_failed",
+            ValidationFailedCode,
             badHttpRequestException.Message,
             EmptyErrors),
         JsonException => (
             StatusCodes.Status400BadRequest,
-            "validation_failed",
+            ValidationFailedCode,
             "Request body is not valid JSON.",
             EmptyErrors),
         ArgumentException argumentException => (
             StatusCodes.Status400BadRequest,
-            "validation_failed",
+            ValidationFailedCode,
             argumentException.Message,
             EmptyErrors),
         _ => (
             StatusCodes.Status500InternalServerError,
-            "server_error",
+            ServerErrorCode,
             "An unexpected server error occurred.",
             EmptyErrors),
       };

@@ -168,10 +168,12 @@ export class CustomerOrdersPage {
         sort: 'name',
         order: 'asc',
       }),
-      activeCustomerOrders: this.customerOrdersApi.getOpenCustomerOrders({
-        sort: 'createdAt',
-        order: 'desc',
-      }).pipe(catchError(() => of<readonly CustomerOrderResponse[]>([]))),
+      activeCustomerOrders: this.customerOrdersApi
+        .getOpenCustomerOrders({
+          sort: 'createdAt',
+          order: 'desc',
+        })
+        .pipe(catchError(() => of<readonly CustomerOrderResponse[]>([]))),
     })
       .pipe(
         finalize(() => {
@@ -318,8 +320,7 @@ export class CustomerOrdersPage {
     const selectedOrder = this.selectedCancelOrder();
 
     if (
-      selectedOrder &&
-      selectedOrder.customerOrderId === customerOrderId &&
+      selectedOrder?.customerOrderId === customerOrderId &&
       selectedOrder.status === 'Cancelled'
     ) {
       this.cancelError.set(this.createPageErrorState('This customer order is already cancelled.'));
@@ -385,7 +386,9 @@ export class CustomerOrdersPage {
     return errors;
   }
 
-  protected showCustomerFieldError(controlName: 'customerName' | 'customerEmail' | 'customerPhone') {
+  protected showCustomerFieldError(
+    controlName: 'customerName' | 'customerEmail' | 'customerPhone',
+  ) {
     const control = this.createOrderForm.controls[controlName];
     return Boolean(control.invalid && (control.touched || control.dirty));
   }
@@ -404,12 +407,15 @@ export class CustomerOrdersPage {
       return null;
     }
 
-    return this.stockLevels().find((stockLevel) => stockLevel.productId === productId)?.quantityOnHand ?? null;
+    return (
+      this.stockLevels().find((stockLevel) => stockLevel.productId === productId)?.quantityOnHand ??
+      null
+    );
   }
 
   protected canCancelSelectedOrder(): boolean {
     const selectedOrder = this.selectedCancelOrder();
-    return Boolean(this.cancelOrderForm.valid && (!selectedOrder || selectedOrder.status !== 'Cancelled'));
+    return Boolean(this.cancelOrderForm.valid && selectedOrder?.status !== 'Cancelled');
   }
 
   protected hasActiveCustomerOrders(): boolean {
@@ -496,7 +502,10 @@ export class CustomerOrdersPage {
     const requestedQuantities = new Map<string, number>();
 
     for (const line of lines) {
-      requestedQuantities.set(line.productId, (requestedQuantities.get(line.productId) ?? 0) + Number(line.quantity));
+      requestedQuantities.set(
+        line.productId,
+        (requestedQuantities.get(line.productId) ?? 0) + Number(line.quantity),
+      );
     }
 
     for (const [productId, requestedQuantity] of requestedQuantities) {
@@ -514,8 +523,7 @@ export class CustomerOrdersPage {
   }
 
   private normalizeOptionalValue(value: string): string | null {
-    const trimmedValue = value.trim();
-    return trimmedValue ? trimmedValue : null;
+    return value.trim() || null;
   }
 
   private createPageErrorState(

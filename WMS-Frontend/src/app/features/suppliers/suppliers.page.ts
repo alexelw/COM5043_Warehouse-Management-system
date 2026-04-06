@@ -175,7 +175,7 @@ export class SuppliersPage {
       return;
     }
 
-    const confirmed = window.confirm(`Delete supplier "${supplier.name}"?`);
+    const confirmed = globalThis.confirm?.(`Delete supplier "${supplier.name}"?`) ?? false;
 
     if (!confirmed) {
       return;
@@ -248,7 +248,6 @@ export class SuppliersPage {
   }
 
   private normalizeOptionalValue(value: string | null): string | null {
-    const trimmedValue = value?.trim();
-    return trimmedValue ? trimmedValue : null;
+    return value?.trim() || null;
   }
 }

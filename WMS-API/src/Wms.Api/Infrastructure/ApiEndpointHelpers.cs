@@ -4,6 +4,9 @@ using System.Globalization;
 
 internal static class ApiEndpointHelpers
 {
+  private static readonly IReadOnlyList<string> InvalidDateRangeErrors =
+      new[] { "From date must be on or before To date." };
+
   public static IReadOnlyList<T> ApplyListOptions<T>(
       IEnumerable<T> source,
       string? sort,
@@ -81,8 +84,8 @@ internal static class ApiEndpointHelpers
     {
       throw new RequestValidationException(new Dictionary<string, IReadOnlyList<string>>
       {
-        ["from"] = new[] { "From date must be on or before To date." },
-        ["to"] = new[] { "From date must be on or before To date." },
+        ["from"] = InvalidDateRangeErrors,
+        ["to"] = InvalidDateRangeErrors,
       });
     }
   }

@@ -225,7 +225,7 @@ export class InventoryPage {
       return;
     }
 
-    const confirmed = window.confirm(`Delete product "${product.name}"?`);
+    const confirmed = globalThis.confirm?.(`Delete product "${product.name}"?`) ?? false;
 
     if (!confirmed) {
       return;

@@ -84,17 +84,6 @@ internal static class ApplicationMapping
         product.UnitCost.ToModel());
   }
 
-  public static StockLevelResult ToStockLevelResult(this Product product)
-  {
-    ArgumentNullException.ThrowIfNull(product);
-
-    return new StockLevelResult(
-        product.ProductId,
-        product.Sku,
-        product.Name,
-        product.QuantityOnHand);
-  }
-
   public static PurchaseOrderResult ToResult(this PurchaseOrder purchaseOrder)
   {
     ArgumentNullException.ThrowIfNull(purchaseOrder);
@@ -194,5 +183,16 @@ internal static class ApplicationMapping
         export.FilePath,
         from,
         to);
+  }
+
+  public static StockLevelResult ToStockLevelResult(this Product product)
+  {
+    ArgumentNullException.ThrowIfNull(product);
+
+    return new StockLevelResult(
+        product.ProductId,
+        product.Sku,
+        product.Name,
+        product.QuantityOnHand);
   }
 }
