@@ -3,15 +3,17 @@ namespace Wms.Api
   using System.Text.Json;
   using System.Text.Json.Serialization;
   using Microsoft.AspNetCore.Http.Json;
+  using Microsoft.EntityFrameworkCore;
   using Microsoft.OpenApi.Models;
   using Wms.Api.Endpoints;
   using Wms.Api.Infrastructure;
   using Wms.Application;
   using Wms.Infrastructure;
+  using Wms.Infrastructure.Persistence;
 
   public static class Program
   {
-    public static Task Main(string[] args)
+    public static async Task Main(string[] args)
     {
       var builder = WebApplication.CreateBuilder(args);
 
@@ -44,9 +46,19 @@ namespace Wms.Api
       app.UseSwagger();
       app.UseSwaggerUI();
 
+      await ApplyMigrationsAsync(app);
+
       app.MapWmsApi();
 
-      return app.RunAsync();
+      await app.RunAsync();
+    }
+
+    private static async Task ApplyMigrationsAsync(WebApplication app)
+    {
+      await using var scope = app.Services.CreateAsyncScope();
+      var dbContext = scope.ServiceProvider.GetRequiredService<WmsDbContext>();
+
+      await dbContext.Database.MigrateAsync();
     }
   }
 }

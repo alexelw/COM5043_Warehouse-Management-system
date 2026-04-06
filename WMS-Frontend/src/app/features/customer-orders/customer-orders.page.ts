@@ -1,13 +1,15 @@
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   computed,
   effect,
   inject,
   signal,
 } from '@angular/core';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { finalize } from 'rxjs';
+import { catchError, finalize, forkJoin, of } from 'rxjs';
 import { getFieldErrors, toApiErrorState } from '../../core/http/api-helpers';
 import {
   ApiErrorState,
@@ -42,6 +44,7 @@ import { CustomerOrdersApiService } from './data/customer-orders.api';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CustomerOrdersPage {
+  private readonly destroyRef = inject(DestroyRef);
   private readonly formBuilder = inject(FormBuilder);
   private readonly roleService = inject(RoleService);
   private readonly inventoryApi = inject(InventoryApiService);
@@ -53,12 +56,20 @@ export class CustomerOrdersPage {
   protected readonly customerOrderStatuses = CUSTOMER_ORDER_STATUSES;
   protected readonly stockLevels = signal<readonly StockLevelResponse[]>([]);
   protected readonly customerOrders = signal<readonly CustomerOrderResponse[]>([]);
+  protected readonly activeCustomerOrders = signal<readonly CustomerOrderResponse[]>([]);
+  protected readonly lastCreatedCustomerOrder = signal<CustomerOrderResponse | null>(null);
+  protected readonly selectedCancelOrder = signal<CustomerOrderResponse | null>(null);
   protected readonly isLoading = signal(false);
+  protected readonly isLoadingCancelOrder = signal(false);
   protected readonly isCreating = signal(false);
   protected readonly isCancelling = signal(false);
   protected readonly loadError = signal<ApiErrorState | null>(null);
   protected readonly createError = signal<ApiErrorState | null>(null);
   protected readonly cancelError = signal<ApiErrorState | null>(null);
+  protected readonly cancelLookupError = signal<ApiErrorState | null>(null);
+  protected readonly availableStockLevels = computed(() =>
+    this.stockLevels().filter((stockLevel) => stockLevel.quantityOnHand > 0),
+  );
 
   protected readonly managerFiltersForm = this.formBuilder.group(
     {
@@ -72,7 +83,7 @@ export class CustomerOrdersPage {
   protected readonly createOrderForm = this.formBuilder.nonNullable.group({
     customerName: ['', [Validators.required]],
     customerEmail: ['', [Validators.email]],
-    customerPhone: ['', [Validators.pattern(/^[0-9+()\-\s]*$/)]],
+    customerPhone: ['', [Validators.pattern(/^$|^[0-9+()\-\s]+$/)]],
     lines: this.formBuilder.array([this.createOrderLineGroup()]),
   });
 
@@ -82,6 +93,19 @@ export class CustomerOrdersPage {
   });
 
   constructor() {
+    this.cancelOrderForm.controls.customerOrderId.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((customerOrderId) => {
+        const normalizedCustomerOrderId = customerOrderId.trim();
+        const selectedOrder = this.selectedCancelOrder();
+
+        if (selectedOrder && selectedOrder.customerOrderId !== normalizedCustomerOrderId) {
+          this.selectedCancelOrder.set(null);
+        }
+
+        this.cancelLookupError.set(null);
+      });
+
     effect(() => {
       if (this.isManager()) {
         this.loadManagerData();
@@ -95,7 +119,10 @@ export class CustomerOrdersPage {
 
       this.customerOrders.set([]);
       this.stockLevels.set([]);
+      this.activeCustomerOrders.set([]);
       this.loadError.set(null);
+      this.selectedCancelOrder.set(null);
+      this.cancelLookupError.set(null);
     });
   }
 
@@ -136,19 +163,26 @@ export class CustomerOrdersPage {
     this.isLoading.set(true);
     this.loadError.set(null);
 
-    this.inventoryApi
-      .getStockLevels({
+    forkJoin({
+      stockLevels: this.inventoryApi.getStockLevels({
         sort: 'name',
         order: 'asc',
-      })
+      }),
+      activeCustomerOrders: this.customerOrdersApi.getOpenCustomerOrders({
+        sort: 'createdAt',
+        order: 'desc',
+      }).pipe(catchError(() => of<readonly CustomerOrderResponse[]>([]))),
+    })
       .pipe(
         finalize(() => {
           this.isLoading.set(false);
         }),
       )
       .subscribe({
-        next: (stockLevels) => {
+        next: ({ stockLevels, activeCustomerOrders }) => {
           this.stockLevels.set(stockLevels);
+          this.activeCustomerOrders.set(activeCustomerOrders);
+          this.syncOrderLinesWithAvailableStock();
         },
         error: (error) => {
           this.loadError.set(toApiErrorState(error));
@@ -158,6 +192,7 @@ export class CustomerOrdersPage {
 
   protected addOrderLine(): void {
     this.orderLines.push(this.createOrderLineGroup());
+    this.syncOrderLinesWithAvailableStock();
   }
 
   protected removeOrderLine(index: number): void {
@@ -176,9 +211,14 @@ export class CustomerOrdersPage {
       return;
     }
 
-    this.isCreating.set(true);
-
     const formValue = this.createOrderForm.getRawValue();
+    const stockValidationMessage = this.validateCreateOrderLines(formValue.lines);
+    if (stockValidationMessage) {
+      this.createError.set(this.createPageErrorState(stockValidationMessage));
+      return;
+    }
+
+    this.isCreating.set(true);
 
     this.customerOrdersApi
       .createCustomerOrder({
@@ -202,11 +242,65 @@ export class CustomerOrdersPage {
         }),
       )
       .subscribe({
-        next: () => {
+        next: (customerOrder) => {
+          this.lastCreatedCustomerOrder.set(customerOrder);
+          this.selectedCancelOrder.set(customerOrder);
+          this.cancelOrderForm.controls.customerOrderId.setValue(customerOrder.customerOrderId);
+          this.cancelOrderForm.controls.reason.setValue('');
           this.resetCreateOrderForm();
+          this.loadWarehouseData();
         },
         error: (error) => {
           this.createError.set(toApiErrorState(error));
+        },
+      });
+  }
+
+  protected useLastCreatedOrder(): void {
+    const customerOrder = this.lastCreatedCustomerOrder();
+    if (!customerOrder) {
+      return;
+    }
+
+    this.cancelOrderForm.controls.customerOrderId.setValue(customerOrder.customerOrderId);
+    this.selectedCancelOrder.set(customerOrder);
+    this.cancelLookupError.set(null);
+  }
+
+  protected useCustomerOrderForCancel(customerOrder: CustomerOrderResponse): void {
+    this.cancelOrderForm.controls.customerOrderId.setValue(customerOrder.customerOrderId);
+    this.selectedCancelOrder.set(customerOrder);
+    this.cancelLookupError.set(null);
+  }
+
+  protected loadCustomerOrderForCancel(): void {
+    const customerOrderId = this.cancelOrderForm.controls.customerOrderId.getRawValue().trim();
+
+    this.cancelError.set(null);
+    this.cancelLookupError.set(null);
+
+    if (!customerOrderId || !this.isWarehouseStaff()) {
+      this.selectedCancelOrder.set(null);
+      return;
+    }
+
+    this.isLoadingCancelOrder.set(true);
+
+    this.customerOrdersApi
+      .getCustomerOrder(customerOrderId)
+      .pipe(
+        finalize(() => {
+          this.isLoadingCancelOrder.set(false);
+        }),
+      )
+      .subscribe({
+        next: (customerOrder) => {
+          this.cancelOrderForm.controls.customerOrderId.setValue(customerOrder.customerOrderId);
+          this.selectedCancelOrder.set(customerOrder);
+        },
+        error: (error) => {
+          this.selectedCancelOrder.set(null);
+          this.cancelLookupError.set(toApiErrorState(error));
         },
       });
   }
@@ -219,12 +313,23 @@ export class CustomerOrdersPage {
       return;
     }
 
+    const formValue = this.cancelOrderForm.getRawValue();
+    const customerOrderId = formValue.customerOrderId.trim();
+    const selectedOrder = this.selectedCancelOrder();
+
+    if (
+      selectedOrder &&
+      selectedOrder.customerOrderId === customerOrderId &&
+      selectedOrder.status === 'Cancelled'
+    ) {
+      this.cancelError.set(this.createPageErrorState('This customer order is already cancelled.'));
+      return;
+    }
+
     this.isCancelling.set(true);
 
-    const formValue = this.cancelOrderForm.getRawValue();
-
     this.customerOrdersApi
-      .cancelCustomerOrder(formValue.customerOrderId.trim(), {
+      .cancelCustomerOrder(customerOrderId, {
         reason: formValue.reason.trim(),
       })
       .pipe(
@@ -233,11 +338,15 @@ export class CustomerOrdersPage {
         }),
       )
       .subscribe({
-        next: () => {
-          this.cancelOrderForm.reset({
-            customerOrderId: '',
-            reason: '',
-          });
+        next: (customerOrder) => {
+          this.selectedCancelOrder.set(customerOrder);
+
+          if (this.lastCreatedCustomerOrder()?.customerOrderId === customerOrder.customerOrderId) {
+            this.lastCreatedCustomerOrder.set(customerOrder);
+          }
+
+          this.cancelOrderForm.controls.reason.setValue('');
+          this.loadWarehouseData();
         },
         error: (error) => {
           this.cancelError.set(toApiErrorState(error));
@@ -255,6 +364,62 @@ export class CustomerOrdersPage {
 
   protected formatTotal(order: CustomerOrderResponse): string {
     return formatMoney(order.totalAmount);
+  }
+
+  protected customerFieldErrors(controlName: 'customerName' | 'customerEmail' | 'customerPhone') {
+    const control = this.createOrderForm.controls[controlName];
+    const errors: string[] = [];
+
+    if (control.hasError('required')) {
+      errors.push('This field is required.');
+    }
+
+    if (control.hasError('email')) {
+      errors.push('Enter a valid email address.');
+    }
+
+    if (control.hasError('pattern')) {
+      errors.push('Enter a valid phone number.');
+    }
+
+    return errors;
+  }
+
+  protected showCustomerFieldError(controlName: 'customerName' | 'customerEmail' | 'customerPhone') {
+    const control = this.createOrderForm.controls[controlName];
+    return Boolean(control.invalid && (control.touched || control.dirty));
+  }
+
+  protected hasAvailableStock(): boolean {
+    return this.availableStockLevels().length > 0;
+  }
+
+  protected stockLevelLabel(stockLevel: StockLevelResponse): string {
+    return `${stockLevel.name} (${stockLevel.sku})`;
+  }
+
+  protected availableStockForLine(index: number): number | null {
+    const productId = String(this.orderLines.at(index).get('productId')?.value ?? '');
+    if (!productId) {
+      return null;
+    }
+
+    return this.stockLevels().find((stockLevel) => stockLevel.productId === productId)?.quantityOnHand ?? null;
+  }
+
+  protected canCancelSelectedOrder(): boolean {
+    const selectedOrder = this.selectedCancelOrder();
+    return Boolean(this.cancelOrderForm.valid && (!selectedOrder || selectedOrder.status !== 'Cancelled'));
+  }
+
+  protected hasActiveCustomerOrders(): boolean {
+    return this.activeCustomerOrders().length > 0;
+  }
+
+  protected customerOrderLineLabel(productId: string): string {
+    return (
+      this.stockLevels().find((stockLevel) => stockLevel.productId === productId)?.name ?? productId
+    );
   }
 
   protected lineErrors(index: number, controlName: 'productId' | 'quantity' | 'unitPriceAmount') {
@@ -307,8 +472,59 @@ export class CustomerOrdersPage {
     this.orderLines.push(this.createOrderLineGroup());
   }
 
+  private syncOrderLinesWithAvailableStock(): void {
+    const availableProductIds = new Set(
+      this.availableStockLevels().map((stockLevel) => stockLevel.productId),
+    );
+
+    for (let index = 0; index < this.orderLines.length; index += 1) {
+      const group = this.orderLines.at(index);
+      const productId = String(group.get('productId')?.value ?? '');
+
+      if (productId && !availableProductIds.has(productId)) {
+        group.patchValue({ productId: '' }, { emitEvent: false });
+      }
+    }
+  }
+
+  private validateCreateOrderLines(
+    lines: readonly { productId: string; quantity: number }[],
+  ): string | null {
+    const availableByProduct = new Map(
+      this.stockLevels().map((stockLevel) => [stockLevel.productId, stockLevel]),
+    );
+    const requestedQuantities = new Map<string, number>();
+
+    for (const line of lines) {
+      requestedQuantities.set(line.productId, (requestedQuantities.get(line.productId) ?? 0) + Number(line.quantity));
+    }
+
+    for (const [productId, requestedQuantity] of requestedQuantities) {
+      const stockLevel = availableByProduct.get(productId);
+      if (!stockLevel) {
+        return 'Choose a product that currently has stock available.';
+      }
+
+      if (requestedQuantity > stockLevel.quantityOnHand) {
+        return `${stockLevel.name} only has ${stockLevel.quantityOnHand} item(s) in stock.`;
+      }
+    }
+
+    return null;
+  }
+
   private normalizeOptionalValue(value: string): string | null {
     const trimmedValue = value.trim();
     return trimmedValue ? trimmedValue : null;
+  }
+
+  private createPageErrorState(
+    message: string,
+    errors: Record<string, readonly string[]> = {},
+  ): ApiErrorState {
+    return {
+      message,
+      errors,
+    };
   }
 }

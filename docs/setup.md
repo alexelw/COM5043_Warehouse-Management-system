@@ -11,6 +11,7 @@ Shows how to run the API and frontend locally for coursework demos.
 From repository root:
 
 ```bash
+docker compose -f WMS-API/docker/docker-compose.yml up -d wms-mysql
 cd WMS-API
 dotnet restore
 dotnet build
@@ -18,6 +19,7 @@ dotnet run --project src/Wms.Api
 ```
 
 The API prints its listening URLs on startup.
+Pending EF Core migrations are applied automatically during startup.
 
 ### Database
 Connection string key: `ConnectionStrings:DefaultConnection` in

@@ -13,13 +13,16 @@ namespace Wms.Api.Infrastructure
 
     private readonly RequestDelegate _next;
     private readonly ILogger<ApiExceptionHandlingMiddleware> _logger;
+    private readonly IHostEnvironment _environment;
 
     public ApiExceptionHandlingMiddleware(
         RequestDelegate next,
-        ILogger<ApiExceptionHandlingMiddleware> logger)
+        ILogger<ApiExceptionHandlingMiddleware> logger,
+        IHostEnvironment environment)
     {
       this._next = next;
       this._logger = logger;
+      this._environment = environment;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -84,10 +87,10 @@ namespace Wms.Api.Infrastructure
             "conflict",
             domainRuleViolationException.Message,
             EmptyErrors),
-        DbUpdateException => (
+        DbUpdateException dbUpdateException => (
             StatusCodes.Status409Conflict,
             "conflict",
-            "The requested operation conflicts with existing data.",
+            this.GetDbUpdateMessage(dbUpdateException),
             EmptyErrors),
         BadHttpRequestException badHttpRequestException => (
             StatusCodes.Status400BadRequest,
@@ -132,6 +135,16 @@ namespace Wms.Api.Infrastructure
       };
 
       await context.Response.WriteAsJsonAsync(response);
+    }
+
+    private string GetDbUpdateMessage(DbUpdateException exception)
+    {
+      if (this._environment.IsDevelopment())
+      {
+        return exception.InnerException?.Message ?? exception.Message;
+      }
+
+      return "The requested operation conflicts with existing data.";
     }
   }
 }

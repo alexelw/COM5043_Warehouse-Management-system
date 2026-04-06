@@ -45,8 +45,16 @@ namespace Wms.Api.Endpoints
               StatusCodes.Status400BadRequest,
               StatusCodes.Status500InternalServerError);
 
+      group.MapGet("/open", GetOpenPurchaseOrdersAsync)
+          .RequireWmsRole(UserRole.WarehouseStaff)
+          .WithWmsDocs("GetOpenPurchaseOrders", "Get open purchase orders", "Returns purchase orders that still have quantities outstanding for receiving.")
+          .Produces<PurchaseOrderResponse[]>(StatusCodes.Status200OK)
+          .ProducesErrorResponses(
+              StatusCodes.Status400BadRequest,
+              StatusCodes.Status500InternalServerError);
+
       group.MapGet("/{purchaseOrderId:guid}", GetPurchaseOrderAsync)
-          .RequireWmsRole(UserRole.Manager)
+          .RequireWmsRole(UserRole.Manager, UserRole.WarehouseStaff)
           .WithWmsDocs("GetPurchaseOrder", "Get purchase order", "Returns purchase order details.")
           .Produces<PurchaseOrderResponse>(StatusCodes.Status200OK)
           .ProducesErrorResponses(
@@ -74,7 +82,7 @@ namespace Wms.Api.Endpoints
               StatusCodes.Status500InternalServerError);
 
       group.MapGet("/{purchaseOrderId:guid}/receipts", GetReceiptsAsync)
-          .RequireWmsRole(UserRole.Manager)
+          .RequireWmsRole(UserRole.Manager, UserRole.WarehouseStaff)
           .WithWmsDocs("GetPurchaseOrderReceipts", "Get purchase order receipts", "Returns delivery history for a purchase order.")
           .Produces<GoodsReceiptResponse[]>(StatusCodes.Status200OK)
           .ProducesErrorResponses(
@@ -120,6 +128,35 @@ namespace Wms.Api.Endpoints
 
       var shapedResults = ApiEndpointHelpers.ApplyListOptions(
           purchaseOrders,
+          sort,
+          order,
+          page ?? 1,
+          pageSize ?? 50,
+          defaultSort: "createdAt",
+          defaultDescending: true,
+          PurchaseOrderSortSelectors);
+
+      return TypedResults.Ok(shapedResults.Select(static purchaseOrder => purchaseOrder.ToResponse()).ToArray());
+    }
+
+    private static async Task<IResult> GetOpenPurchaseOrdersAsync(
+        string? sort,
+        string? order,
+        int? page,
+        int? pageSize,
+        IPurchaseOrderService purchaseOrderService,
+        CancellationToken cancellationToken)
+    {
+      var purchaseOrders = await purchaseOrderService.GetPurchaseOrdersAsync(cancellationToken: cancellationToken);
+
+      var openPurchaseOrders = purchaseOrders
+          .Where(static purchaseOrder =>
+              purchaseOrder.Status is Wms.Domain.Enums.PurchaseOrderStatus.Pending or
+              Wms.Domain.Enums.PurchaseOrderStatus.PartiallyReceived)
+          .ToArray();
+
+      var shapedResults = ApiEndpointHelpers.ApplyListOptions(
+          openPurchaseOrders,
           sort,
           order,
           page ?? 1,

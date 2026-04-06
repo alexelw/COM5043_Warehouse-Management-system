@@ -31,6 +31,16 @@ export class CustomerOrdersApiService {
     });
   }
 
+  getOpenCustomerOrders(query: CustomerOrderQuery = {}): Observable<readonly CustomerOrderResponse[]> {
+    return this.http.get<readonly CustomerOrderResponse[]>('/api/customer-orders/open', {
+      params: buildHttpParams(query),
+    });
+  }
+
+  getCustomerOrder(customerOrderId: string): Observable<CustomerOrderResponse> {
+    return this.http.get<CustomerOrderResponse>(`/api/customer-orders/${customerOrderId}`);
+  }
+
   createCustomerOrder(request: CreateCustomerOrderRequest): Observable<CustomerOrderResponse> {
     return this.http.post<CustomerOrderResponse>('/api/customer-orders', request);
   }

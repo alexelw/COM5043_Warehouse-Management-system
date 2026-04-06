@@ -8,5 +8,5 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 })
 export class EmptyStateComponent {
   readonly title = input.required<string>();
-  readonly description = input.required<string>();
+  readonly description = input<string>('');
 }

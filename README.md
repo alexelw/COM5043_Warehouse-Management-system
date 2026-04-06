@@ -14,24 +14,20 @@ From the repository root:
 
 ```bash
 docker compose -f WMS-API/docker/docker-compose.yml up -d wms-mysql
-cd WMS-API
-dotnet ef database update --project src/Wms.Infrastructure --startup-project src/Wms.Api
-cd ..
 docker compose -f WMS-API/docker/docker-compose.yml up --build wms-api
 ```
 
 - API: `http://localhost:5021`
 - Swagger: `http://localhost:5021/swagger`
 
-The API does not auto-run migrations on startup, so the `dotnet ef database update` step matters on a fresh database.
+The API now applies pending EF Core migrations automatically on startup, which helps local workflow changes stay in sync with the database schema.
 
 ## Run locally
 
-Start MySQL first, then apply migrations:
+Start MySQL first:
 
 ```bash
-cd WMS-API
-dotnet ef database update --project src/Wms.Infrastructure --startup-project src/Wms.Api
+docker compose -f WMS-API/docker/docker-compose.yml up -d wms-mysql
 ```
 
 Run the API:

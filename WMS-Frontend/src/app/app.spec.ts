@@ -23,7 +23,8 @@ describe('App', () => {
     await fixture.whenStable();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('Warehouse Management System');
+    expect(compiled.textContent).toContain('BNU Industry Solutions');
+    expect(compiled.textContent).toContain('Warehouse');
     expect(compiled.textContent).toContain('Dashboard');
   });
 });

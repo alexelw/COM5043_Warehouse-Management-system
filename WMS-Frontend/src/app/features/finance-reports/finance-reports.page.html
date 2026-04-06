@@ -1,19 +1,12 @@
 <section class="page">
-  <app-page-header
-    eyebrow="Administrator"
-    title="Finance and reports"
-    description="This page now talks to the finance and reporting endpoints directly, with admin filters, report preview, export history, and transaction actions kept lightweight."
-  >
+  <app-page-header eyebrow="Administrator" title="Finance and reports" description="Transactions and exports">
     <button actions class="button button--ghost" type="button" (click)="refreshAll()">
-      Refresh all
+      Refresh
     </button>
   </app-page-header>
 
   @if (!isAdministrator()) {
-    <app-empty-state
-      title="Administrator role required"
-      description="Switch the role selector to Administrator to review transactions, preview reports, and manage exports."
-    />
+    <app-empty-state title="Administrator role required" />
   } @else {
     <section class="grid-2">
       <form class="surface panel-card stack" [formGroup]="reportForm">
@@ -99,10 +92,7 @@
             <dd>{{ formatReportWindow(report()!) }}</dd>
           </dl>
         } @else {
-          <app-empty-state
-            title="No preview loaded yet"
-            description="Use the report controls to load a financial summary for all dates or a specific date range."
-          />
+          <app-empty-state title="No preview loaded yet" />
         }
 
         @if (lastExport()) {
@@ -176,10 +166,7 @@
         @if (isLoadingTransactions()) {
           <app-loading-state label="Loading transactions..." />
         } @else if (!transactions().length) {
-          <app-empty-state
-            title="No transactions found"
-            description="Try broader filters or clear the date range to see more financial activity."
-          />
+          <app-empty-state title="No transactions found" />
         } @else {
           <table class="table">
             <thead>
@@ -236,8 +223,7 @@
         <app-error-banner [error]="actionError()" title="Could not update transaction" />
 
         <div class="callout">
-          Use a transaction from the table or paste the ID manually. Voiding requires a reason;
-          reversing keeps the original record and creates a linked reversal.
+          Use a transaction from the table or enter the ID manually.
         </div>
 
         <div class="form-grid">
@@ -350,10 +336,7 @@
       @if (isLoadingExports()) {
         <app-loading-state label="Loading export history..." />
       } @else if (!exports().length) {
-        <app-empty-state
-          title="No exports found"
-          description="Generate the first export from the report form or widen the history filters."
-        />
+        <app-empty-state title="No exports found" />
       } @else {
         <table class="table">
           <thead>

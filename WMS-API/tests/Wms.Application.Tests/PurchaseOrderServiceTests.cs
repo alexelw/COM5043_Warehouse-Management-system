@@ -207,4 +207,51 @@ public class PurchaseOrderServiceTests
         transaction.Status == FinancialTransactionStatus.Voided &&
         transaction.Amount.Amount == 20m);
   }
+
+  [Fact]
+  public async Task GetReceiptsAsync_AfterReceiveDelivery_ReturnsReceiptHistoryFromPurchaseOrder()
+  {
+    var supplierRepository = new InMemorySupplierRepository();
+    var productRepository = new InMemoryProductRepository();
+    var purchaseOrderRepository = new InMemoryPurchaseOrderRepository();
+    var goodsReceiptRepository = new InMemoryGoodsReceiptRepository();
+    var stockMovementRepository = new InMemoryStockMovementRepository();
+    var transactionRepository = new InMemoryTransactionRepository();
+    var unitOfWork = new TrackingUnitOfWork();
+    var clock = new FakeClock();
+
+    var supplier = new Supplier("Acme Supplies", new ContactDetails("supplier@acme.test", null, null));
+    var product = new Product(supplier.SupplierId, "SKU-004", "Widget", 5, new Money(10m));
+    await supplierRepository.AddAsync(supplier);
+    await productRepository.AddAsync(product);
+
+    var service = new PurchaseOrderService(
+        purchaseOrderRepository,
+        supplierRepository,
+        productRepository,
+        goodsReceiptRepository,
+        stockMovementRepository,
+        transactionRepository,
+        unitOfWork,
+        clock);
+
+    var purchaseOrder = await service.CreatePurchaseOrderAsync(new CreatePurchaseOrderRequest(
+        supplier.SupplierId,
+        [new PurchaseOrderLineInput(product.ProductId, 4, new MoneyModel(5m, "GBP"))]));
+
+    await service.ReceiveDeliveryAsync(
+        purchaseOrder.PurchaseOrderId,
+        new ReceiveDeliveryRequest([new GoodsReceiptLineInput(product.ProductId, 2)]));
+
+    var receipts = await service.GetReceiptsAsync(purchaseOrder.PurchaseOrderId);
+
+    var receipt = Assert.Single(receipts);
+    Assert.Equal(purchaseOrder.PurchaseOrderId, receipt.PurchaseOrderId);
+    var receiptLine = Assert.Single(receipt.Lines);
+    Assert.Equal(product.ProductId, receiptLine.ProductId);
+    Assert.Equal(2, receiptLine.QuantityReceived);
+
+    var storedReceipts = await goodsReceiptRepository.ListByPurchaseOrderAsync(purchaseOrder.PurchaseOrderId);
+    Assert.Single(storedReceipts);
+  }
 }

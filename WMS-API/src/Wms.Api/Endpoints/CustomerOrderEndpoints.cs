@@ -39,8 +39,16 @@ namespace Wms.Api.Endpoints
               StatusCodes.Status400BadRequest,
               StatusCodes.Status500InternalServerError);
 
+      group.MapGet("/open", GetOpenCustomerOrdersAsync)
+          .RequireWmsRole(UserRole.WarehouseStaff)
+          .WithWmsDocs("GetOpenCustomerOrders", "Get open customer orders", "Returns customer orders that can still be cancelled by warehouse staff.")
+          .Produces<CustomerOrderResponse[]>(StatusCodes.Status200OK)
+          .ProducesErrorResponses(
+              StatusCodes.Status400BadRequest,
+              StatusCodes.Status500InternalServerError);
+
       group.MapGet("/{customerOrderId:guid}", GetCustomerOrderAsync)
-          .RequireWmsRole(UserRole.Manager)
+          .RequireWmsRole(UserRole.Manager, UserRole.WarehouseStaff)
           .WithWmsDocs("GetCustomerOrder", "Get customer order", "Returns customer order details.")
           .Produces<CustomerOrderResponse>(StatusCodes.Status200OK)
           .ProducesErrorResponses(
@@ -95,6 +103,35 @@ namespace Wms.Api.Endpoints
 
       var shapedResults = ApiEndpointHelpers.ApplyListOptions(
           customerOrders,
+          sort,
+          order,
+          page ?? 1,
+          pageSize ?? 50,
+          defaultSort: "createdAt",
+          defaultDescending: true,
+          CustomerOrderSortSelectors);
+
+      return TypedResults.Ok(shapedResults.Select(static customerOrder => customerOrder.ToResponse()).ToArray());
+    }
+
+    private static async Task<IResult> GetOpenCustomerOrdersAsync(
+        string? sort,
+        string? order,
+        int? page,
+        int? pageSize,
+        IOrderService orderService,
+        CancellationToken cancellationToken)
+    {
+      var customerOrders = await orderService.GetCustomerOrdersAsync(cancellationToken: cancellationToken);
+
+      var openCustomerOrders = customerOrders
+          .Where(static customerOrder =>
+              customerOrder.Status is Wms.Domain.Enums.CustomerOrderStatus.Draft or
+              Wms.Domain.Enums.CustomerOrderStatus.Confirmed)
+          .ToArray();
+
+      var shapedResults = ApiEndpointHelpers.ApplyListOptions(
+          openCustomerOrders,
           sort,
           order,
           page ?? 1,

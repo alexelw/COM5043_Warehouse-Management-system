@@ -1,25 +1,25 @@
 :root {
   --color-ink: #1f2933;
-  --color-muted: #5b6873;
-  --color-surface: rgba(255, 255, 255, 0.88);
+  --color-muted: #5f6b7a;
+  --color-surface: rgba(255, 255, 255, 0.96);
   --color-surface-strong: #ffffff;
-  --color-border: rgba(31, 41, 51, 0.12);
-  --color-line: rgba(31, 41, 51, 0.08);
-  --color-primary: #275d52;
-  --color-primary-strong: #1d463d;
-  --color-accent: #c27a1a;
+  --color-border: rgba(31, 41, 51, 0.1);
+  --color-line: rgba(31, 41, 51, 0.06);
+  --color-primary: #445c91;
+  --color-primary-strong: #32456f;
+  --color-accent: #5c6bc0;
   --color-success: #2f7d4a;
   --color-warning: #b56b11;
   --color-danger: #b44336;
   --color-info: #2f628f;
-  --color-bg-top: #f3efe5;
-  --color-bg-bottom: #e3ecf0;
-  --shadow-soft: 0 18px 40px rgba(37, 53, 68, 0.08);
-  --radius-lg: 20px;
-  --radius-md: 14px;
-  --radius-sm: 10px;
-  --font-sans: 'Aptos', 'Trebuchet MS', 'Segoe UI', sans-serif;
-  --font-display: 'Georgia', 'Palatino Linotype', serif;
+  --color-bg-top: #f5f7fb;
+  --color-bg-bottom: #eef2f8;
+  --shadow-soft: 0 8px 24px rgba(37, 53, 68, 0.08);
+  --radius-lg: 14px;
+  --radius-md: 10px;
+  --radius-sm: 8px;
+  --font-sans: 'Segoe UI', 'Aptos', 'Trebuchet MS', sans-serif;
+  --font-display: 'Segoe UI', 'Aptos', 'Trebuchet MS', sans-serif;
 }
 
 *,
@@ -37,9 +37,7 @@ body {
   margin: 0;
   font-family: var(--font-sans);
   color: var(--color-ink);
-  background:
-    radial-gradient(circle at top left, rgba(194, 122, 26, 0.14), transparent 30%),
-    linear-gradient(180deg, var(--color-bg-top), var(--color-bg-bottom));
+  background: linear-gradient(180deg, var(--color-bg-top), var(--color-bg-bottom));
 }
 
 button,
@@ -103,9 +101,10 @@ main {
 .panel-card h2,
 .section-title {
   margin: 0;
-  font-family: var(--font-display);
-  font-size: 1.3rem;
-  font-weight: 700;
+  font-size: clamp(1.02rem, 1rem + 0.5vw, 1.18rem);
+  font-weight: 600;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 
 .eyebrow {
@@ -120,6 +119,8 @@ main {
 .muted {
   margin: 0;
   color: var(--color-muted);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .button {
@@ -130,11 +131,12 @@ main {
   min-height: 2.75rem;
   padding: 0 1rem;
   border: 1px solid transparent;
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
   background: var(--color-primary);
   color: #ffffff;
   cursor: pointer;
   font-weight: 700;
+  text-align: center;
   transition:
     transform 120ms ease,
     background-color 120ms ease,
@@ -161,7 +163,7 @@ main {
 }
 
 .button--ghost:hover {
-  background: rgba(39, 93, 82, 0.06);
+  background: rgba(68, 92, 145, 0.06);
 }
 
 .form-grid {
@@ -212,6 +214,7 @@ main {
 .section-copy {
   display: grid;
   gap: 0.35rem;
+  min-width: 0;
 }
 
 .panel-actions {
@@ -247,6 +250,7 @@ main {
 .table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .table th,
@@ -255,11 +259,12 @@ main {
   text-align: left;
   border-bottom: 1px solid var(--color-line);
   vertical-align: top;
+  overflow-wrap: anywhere;
 }
 
 .table th {
   color: var(--color-muted);
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -296,7 +301,9 @@ main {
 
 .supporting-text {
   color: var(--color-muted);
-  font-size: 0.92rem;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .summary-card {
@@ -304,20 +311,24 @@ main {
   gap: 0.35rem;
   padding: 1rem 1.1rem;
   border-radius: var(--radius-md);
-  background: rgba(39, 93, 82, 0.08);
+  background: rgba(68, 92, 145, 0.08);
 }
 
 .summary-card__value {
-  font-family: var(--font-display);
-  font-size: 1.6rem;
-  font-weight: 700;
+  font-size: clamp(1.05rem, 0.98rem + 0.7vw, 1.35rem);
+  font-weight: 600;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .callout {
   padding: 1rem 1.1rem;
-  border: 1px dashed rgba(39, 93, 82, 0.22);
+  border: 1px solid rgba(68, 92, 145, 0.16);
   border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.45);
+  background: rgba(68, 92, 145, 0.04);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 .split-card {
@@ -342,9 +353,19 @@ main {
   margin: 0;
 }
 
+.cell-wrap {
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 720px) {
+  .metric-card,
+  .panel-card {
+    padding: 1rem;
+  }
+
   .table {
     display: block;
     overflow-x: auto;
+    table-layout: auto;
   }
 }

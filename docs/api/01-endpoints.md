@@ -388,11 +388,30 @@ Returns all purchase orders.
 
 ---
 
+### Get Open Purchase Orders  
+**Use Case:** UC05, UC15  
+**Method:** `GET`  
+**Route:** `/api/purchase-orders/open`  
+**Role:** Warehouse Staff  
+
+Returns purchase orders that still have quantities outstanding for receiving.
+
+**Query Parameters**
+- `page` (optional, default `1`)
+- `pageSize` (optional, default `50`, max `200`)
+- `sort` (optional, `createdAt|status`, default `createdAt`)
+- `order` (optional, `asc|desc`, default `desc`)
+
+**Responses**
+- `200 OK`
+
+---
+
 ### Get Purchase Order  
-**Use Case:** UC12  
+**Use Case:** UC12, UC05, UC15  
 **Method:** `GET`  
 **Route:** `/api/purchase-orders/{purchaseOrderId}`  
-**Role:** Manager  
+**Role:** Manager, Warehouse Staff  
 
 Returns purchase order details.
 
@@ -436,10 +455,10 @@ Partially Received until remaining quantities are received or cancelled.
 ---
 
 ### Get Purchase Order Receipts  
-**Use Case:** UC12  
+**Use Case:** UC12, UC05, UC15  
 **Method:** `GET`  
 **Route:** `/api/purchase-orders/{purchaseOrderId}/receipts`  
-**Role:** Manager  
+**Role:** Manager, Warehouse Staff  
 
 Returns delivery history for a purchase order.
 
@@ -476,10 +495,10 @@ Creates and confirms a customer order.
 ---
 
 ### Get Customer Order  
-**Use Case:** UC12  
+**Use Case:** UC12, UC13  
 **Method:** `GET`  
 **Route:** `/api/customer-orders/{customerOrderId}`  
-**Role:** Manager  
+**Role:** Manager, Warehouse Staff  
 
 Returns customer order details.
 
@@ -506,6 +525,25 @@ Returns customer order history.
 - `status` (optional, `Draft|Confirmed|Cancelled`)
 - `from` (optional, `YYYY-MM-DD`)
 - `to` (optional, `YYYY-MM-DD`)
+
+**Responses**
+- `200 OK`
+
+---
+
+### Get Open Customer Orders  
+**Use Case:** UC13  
+**Method:** `GET`  
+**Route:** `/api/customer-orders/open`  
+**Role:** Warehouse Staff  
+
+Returns customer orders that are still eligible for cancellation.
+
+**Query Parameters**
+- `page` (optional, default `1`)
+- `pageSize` (optional, default `50`, max `200`)
+- `sort` (optional, `createdAt|status`, default `createdAt`)
+- `order` (optional, `asc|desc`, default `desc`)
 
 **Responses**
 - `200 OK`
@@ -692,12 +730,14 @@ Used for monitoring and CI validation.
 | POST | /api/products/{productId}/adjust-stock | UC17 | Warehouse Staff |
 | POST | /api/purchase-orders | UC04 | Manager |
 | GET | /api/purchase-orders | UC12 | Manager |
-| GET | /api/purchase-orders/{purchaseOrderId} | UC12 | Manager |
+| GET | /api/purchase-orders/open | UC05, UC15 | Warehouse Staff |
+| GET | /api/purchase-orders/{purchaseOrderId} | UC12, UC05, UC15 | Manager, Warehouse Staff |
 | POST | /api/purchase-orders/{purchaseOrderId}/cancel | UC14 | Manager |
 | POST | /api/purchase-orders/{purchaseOrderId}/receipts | UC05, UC15 | Warehouse Staff |
-| GET | /api/purchase-orders/{purchaseOrderId}/receipts | UC12 | Manager |
+| GET | /api/purchase-orders/{purchaseOrderId}/receipts | UC12, UC05, UC15 | Manager, Warehouse Staff |
 | POST | /api/customer-orders | UC08 | Warehouse Staff |
-| GET | /api/customer-orders/{customerOrderId} | UC12 | Manager |
+| GET | /api/customer-orders/open | UC13 | Warehouse Staff |
+| GET | /api/customer-orders/{customerOrderId} | UC12, UC13 | Manager, Warehouse Staff |
 | GET | /api/customer-orders | UC12 | Manager |
 | POST | /api/customer-orders/{customerOrderId}/cancel | UC13 | Warehouse Staff |
 | GET | /api/transactions | — | Administrator |

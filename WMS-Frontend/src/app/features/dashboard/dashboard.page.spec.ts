@@ -20,7 +20,7 @@ describe('DashboardPage', () => {
     httpTestingController.verify();
   });
 
-  it('should render the overview heading', () => {
+  it('should render the dashboard heading', () => {
     const fixture = TestBed.createComponent(DashboardPage);
     fixture.detectChanges();
 
@@ -31,7 +31,7 @@ describe('DashboardPage', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
 
-    expect(compiled.textContent).toContain('Warehouse overview');
+    expect(compiled.textContent).toContain('Dashboard');
     expect(compiled.textContent).toContain('Healthy');
   });
 });

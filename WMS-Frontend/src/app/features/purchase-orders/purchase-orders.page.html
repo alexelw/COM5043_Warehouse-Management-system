@@ -1,9 +1,5 @@
 <section class="page">
-  <app-page-header
-    eyebrow="Orders"
-    title="Purchase orders"
-    description="This page now matches the API role split: Manager can create and review purchase orders, while Warehouse Staff can record receipts when they have a purchase order ID."
-  >
+  <app-page-header eyebrow="Orders" title="Purchase orders" description="Orders and receipts">
     <button
       actions
       class="button"
@@ -81,6 +77,13 @@
 
         <app-error-banner [error]="createError()" title="Could not create purchase order" />
 
+        @if (lastCreatedPurchaseOrder()) {
+          <div class="callout">
+            Latest purchase order ID:
+            <strong>{{ lastCreatedPurchaseOrder()!.purchaseOrderId }}</strong>
+          </div>
+        }
+
         <label class="field">
           <span>Supplier</span>
           <select formControlName="supplierId">
@@ -115,14 +118,19 @@
               <div class="form-grid">
                 <label class="field">
                   <span>Product</span>
-                  <select formControlName="productId">
-                    <option value="">Select a product</option>
-                    @for (product of products(); track product.productId) {
+                  <select formControlName="productId" [disabled]="!hasAvailableProducts()">
+                    <option value="">
+                      {{ hasAvailableProducts() ? 'Select a product' : 'Select a supplier first' }}
+                    </option>
+                    @for (product of availableProducts(); track product.productId) {
                       <option [value]="product.productId">
-                        {{ product.name }} ({{ product.sku }})
+                        {{ productOptionLabel(product) }}
                       </option>
                     }
                   </select>
+                  @if (!hasAvailableProducts()) {
+                    <p class="field-hint">Only products from the selected supplier can be added.</p>
+                  }
                   @if (showPurchaseOrderLineError($index, 'productId')) {
                     @for (message of purchaseOrderLineErrors($index, 'productId'); track message) {
                       <p class="field-error">{{ message }}</p>
@@ -172,14 +180,16 @@
       <article class="surface panel-card stack">
         <p class="eyebrow">List</p>
         <h2>Open and recent purchase orders</h2>
+        <div class="callout">
+          Status changes are workflow-driven: deliveries move orders to
+          <strong>PartiallyReceived</strong> or <strong>Completed</strong>, and managers can cancel
+          eligible orders.
+        </div>
 
         @if (isLoading()) {
           <app-loading-state label="Loading purchase orders..." />
         } @else if (!purchaseOrders().length) {
-          <app-empty-state
-            title="No purchase orders found"
-            description="Try different filters or create the first purchase order."
-          />
+          <app-empty-state title="No purchase orders found" />
         } @else {
           <table class="table">
             <thead>
@@ -239,10 +249,7 @@
       } @else if (isLoadingReceipts()) {
         <app-loading-state label="Loading receipt history..." />
       } @else if (!receipts().length) {
-        <app-empty-state
-          title="No receipts recorded yet"
-          description="The selected purchase order does not have any delivery history yet."
-        />
+        <app-empty-state title="No receipts recorded yet" />
       } @else {
         <table class="table">
           <thead>
@@ -267,21 +274,110 @@
   } @else if (isWarehouseStaff()) {
     <section class="grid-2">
       <article class="surface panel-card stack">
-        <p class="eyebrow">Receiving guide</p>
+        <p class="eyebrow">Receive</p>
         <h2>Record a delivery</h2>
         <div class="callout">
-          The current API lets Warehouse Staff record receipts, but it does not expose a purchase
-          order lookup endpoint for this role. Enter the purchase order ID from paperwork or another
-          internal reference.
+          Select an open purchase order to preview outstanding items, or enter a purchase order ID
+          directly if you already have it.
+        </div>
+        <div class="callout">
+          Recording the delivery updates the purchase order status automatically to
+          <strong>PartiallyReceived</strong> or <strong>Completed</strong>.
         </div>
 
+        @if (lastCreatedPurchaseOrder()) {
+          <div class="callout">
+            Latest purchase order from this session:
+            <strong>{{ lastCreatedPurchaseOrder()!.purchaseOrderId }}</strong>
+          </div>
+        }
+
+        <app-error-banner [error]="receiptLookupError()" title="Could not load purchase order" />
+
         @if (isLoading()) {
-          <app-loading-state label="Loading product options..." />
-        } @else if (!stockLevels().length) {
-          <app-empty-state
-            title="No stock items available"
-            description="Warehouse Staff product options come from current stock levels."
-          />
+          <app-loading-state label="Loading open purchase orders..." />
+        } @else if (isLoadingReceiptOrder()) {
+          <app-loading-state label="Loading purchase order..." />
+        } @else {
+          @if (hasOpenPurchaseOrders()) {
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Purchase order</th>
+                  <th>Created</th>
+                  <th>Lines</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (purchaseOrder of openPurchaseOrders(); track purchaseOrder.purchaseOrderId) {
+                  <tr>
+                    <td>{{ purchaseOrder.purchaseOrderId }}</td>
+                    <td>{{ formatCreatedAt(purchaseOrder.createdAt) }}</td>
+                    <td>{{ purchaseOrder.lines.length }}</td>
+                    <td>{{ purchaseOrder.status }}</td>
+                    <td>
+                      <button
+                        class="button button--ghost"
+                        type="button"
+                        (click)="usePurchaseOrderForReceipt(purchaseOrder)"
+                      >
+                        Use in form
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          } @else {
+            <app-empty-state title="No open purchase orders are waiting to be received" />
+          }
+
+          @if (!loadedReceiptPurchaseOrder()) {
+            <p class="supporting-text">Choose one of the open purchase orders to load its lines.</p>
+          } @else {
+            <div class="split-card">
+              <div class="summary-card">
+                <span class="supporting-text">Purchase order</span>
+                <strong class="summary-card__value">
+                  {{ loadedReceiptPurchaseOrder()!.purchaseOrderId }}
+                </strong>
+              </div>
+
+              <div class="summary-card">
+                <span class="supporting-text">Status</span>
+                <strong class="summary-card__value">
+                  {{ loadedReceiptPurchaseOrder()!.status }}
+                </strong>
+              </div>
+            </div>
+
+            @if (!receivableLines().length) {
+              <app-empty-state title="Nothing is outstanding on this purchase order" />
+            } @else {
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Ordered</th>
+                    <th>Received</th>
+                    <th>Outstanding</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (line of receivableLines(); track line.productId) {
+                    <tr>
+                      <td>{{ receiptProductLabel(line) }}</td>
+                      <td>{{ line.quantityOrdered }}</td>
+                      <td>{{ line.quantityReceived }}</td>
+                      <td>{{ line.quantityOutstanding }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            }
+          }
         }
       </article>
 
@@ -295,16 +391,37 @@
 
         <app-error-banner [error]="receiveError()" title="Could not record delivery" />
 
-        <label class="field">
-          <span>Purchase order ID</span>
-          <input formControlName="purchaseOrderId" placeholder="Paste the purchase order GUID" />
-          @for (
-            message of receiveServerErrors('purchaseOrderId', 'PurchaseOrderId');
-            track message
-          ) {
-            <p class="field-error">{{ message }}</p>
+        <div class="form-grid">
+          <label class="field">
+            <span>Purchase order ID</span>
+            <input formControlName="purchaseOrderId" placeholder="Paste the purchase order GUID" />
+            @for (
+              message of receiveServerErrors('purchaseOrderId', 'PurchaseOrderId');
+              track message
+            ) {
+              <p class="field-error">{{ message }}</p>
+            }
+          </label>
+        </div>
+
+        <div class="panel-actions">
+          <button class="button button--ghost" type="button" (click)="loadPurchaseOrderForReceipt()">
+            Load order
+          </button>
+          @if (lastCreatedPurchaseOrder()) {
+            <button class="button button--ghost" type="button" (click)="useLastCreatedPurchaseOrder()">
+              Use latest order
+            </button>
           }
-        </label>
+          <button
+            class="button button--ghost"
+            type="button"
+            (click)="useOutstandingQuantities()"
+            [disabled]="!receivableLines().length"
+          >
+            Use remaining qty
+          </button>
+        </div>
 
         <div formArrayName="lines" class="stack">
           @for (line of receiptLines.controls; track $index) {
@@ -327,14 +444,21 @@
               <div class="form-grid">
                 <label class="field">
                   <span>Product</span>
-                  <select formControlName="productId">
-                    <option value="">Select a product</option>
-                    @for (stockLevel of stockLevels(); track stockLevel.productId) {
-                      <option [value]="stockLevel.productId">
-                        {{ stockLevel.name }} ({{ stockLevel.sku }})
+                  <select formControlName="productId" [disabled]="!hasReceiptProductOptions()">
+                    <option value="">
+                      {{ hasReceiptProductOptions() ? 'Select a product' : 'No products available' }}
+                    </option>
+                    @for (option of receiptProductOptions(); track option.productId) {
+                      <option [value]="option.productId">
+                        {{ option.label }}
                       </option>
                     }
                   </select>
+                  @if (!loadedReceiptPurchaseOrder()) {
+                    <p class="field-hint">
+                      Load the order first to narrow this list to the outstanding items only.
+                    </p>
+                  }
                   @if (showReceiptLineError($index, 'productId')) {
                     @for (message of receiptLineErrors($index, 'productId'); track message) {
                       <p class="field-error">{{ message }}</p>
@@ -345,6 +469,9 @@
                 <label class="field">
                   <span>Quantity received</span>
                   <input formControlName="quantityReceived" type="number" min="1" step="1" />
+                  @if (outstandingQuantityForReceiptLine($index); as outstandingQuantity) {
+                    <p class="field-hint">Outstanding on this line: {{ outstandingQuantity }}</p>
+                  }
                   @if (showReceiptLineError($index, 'quantityReceived')) {
                     @for (message of receiptLineErrors($index, 'quantityReceived'); track message) {
                       <p class="field-error">{{ message }}</p>
@@ -364,16 +491,17 @@
           <button class="button button--ghost" type="button" (click)="addReceiptLine()">
             Add line
           </button>
-          <button class="button button--secondary" type="submit" [disabled]="isReceiving()">
+          <button
+            class="button button--secondary"
+            type="submit"
+            [disabled]="isReceiving() || !canRecordDelivery()"
+          >
             Record delivery
           </button>
         </div>
       </form>
     </section>
   } @else {
-    <app-empty-state
-      title="Purchase order actions are role-specific"
-      description="Switch to Manager to create and review orders or Warehouse Staff to record receipts."
-    />
+    <app-empty-state title="Purchase order actions are role-specific" />
   }
 </section>

@@ -1,14 +1,13 @@
 <header class="top-nav surface">
   <div class="top-nav__brand">
     <a class="top-nav__brand-link" routerLink="/dashboard">
-      <p class="eyebrow">Warehouse Management System</p>
-      <h1>Operations Console</h1>
+      <p class="eyebrow">BNU Industry Solutions</p>
+      <h1>Warehouse</h1>
     </a>
-    <p class="muted">Suppliers, stock, orders, and reporting in one place.</p>
   </div>
 
   <nav class="top-nav__links" aria-label="Primary">
-    @for (item of navItems; track item.path) {
+    @for (item of visibleNavItems(); track item.path) {
       <a
         class="top-nav__link"
         [routerLink]="item.path"
@@ -21,10 +20,7 @@
   </nav>
 
   <div class="top-nav__meta">
-    <p class="muted">
-      Working role:
-      <strong>{{ selectedRole() }}</strong>
-    </p>
+    <p class="top-nav__role">{{ selectedRole() }}</p>
     <app-role-selector />
   </div>
 </header>

@@ -1,20 +1,13 @@
 <section class="page">
-  <app-page-header
-    eyebrow="Manager"
-    title="Suppliers"
-    description="This page now reads and writes supplier records through the API, with search, inline validation, and edit/delete actions."
-  >
+  <app-page-header eyebrow="Manager" title="Suppliers" description="Supplier records">
     <button actions class="button button--ghost" type="button" (click)="loadSuppliers()">
-      Refresh list
+      Refresh
     </button>
     <button actions class="button" type="button" (click)="resetSupplierForm()">New supplier</button>
   </app-page-header>
 
   @if (!isManager()) {
-    <app-empty-state
-      title="Manager role required"
-      description="Supplier management is only available when the role selector is set to Manager."
-    />
+    <app-empty-state title="Manager role required" />
   } @else {
     <app-error-banner [error]="listError()" title="Could not load suppliers" />
 
@@ -127,10 +120,7 @@
         @if (isLoading()) {
           <app-loading-state label="Loading suppliers..." />
         } @else if (!suppliers().length) {
-          <app-empty-state
-            title="No suppliers found"
-            description="Try a broader search or add the first supplier from the form."
-          />
+          <app-empty-state title="No suppliers found" />
         } @else {
           <table class="table">
             <thead>
@@ -172,16 +162,5 @@
         }
       </article>
     </section>
-
-    <article class="surface panel-card stack">
-      <p class="eyebrow">Validation</p>
-      <h2>What this form now checks</h2>
-      <ul class="bullet-list">
-        <li>Name is required.</li>
-        <li>Email uses browser-friendly email validation.</li>
-        <li>Phone only accepts common phone characters.</li>
-        <li>At least one contact field must be provided before submit.</li>
-      </ul>
-    </article>
   }
 </section>

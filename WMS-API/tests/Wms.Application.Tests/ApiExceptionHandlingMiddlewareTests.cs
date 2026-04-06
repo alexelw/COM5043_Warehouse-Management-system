@@ -1,6 +1,9 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Hosting;
 using Wms.Api.Infrastructure;
 using Wms.Application.Common.Exceptions;
 using Wms.Contracts.Common;
@@ -61,9 +64,30 @@ public sealed class ApiExceptionHandlingMiddlewareTests
     Assert.Empty(response.Errors);
   }
 
+  [Fact]
+  public async Task InvokeAsync_WhenDatabaseUpdateFailsInDevelopment_ReturnsInnerExceptionMessage()
+  {
+    var middleware = CreateMiddleware(_ =>
+        throw new DbUpdateException(
+            "Write failed.",
+            new InvalidOperationException("Duplicate entry 'abc' for key 'PRIMARY'.")));
+    var context = CreateContext();
+
+    await middleware.InvokeAsync(context);
+
+    var response = await ReadResponseAsync(context);
+
+    Assert.Equal(StatusCodes.Status409Conflict, context.Response.StatusCode);
+    Assert.Equal("conflict", response.Code);
+    Assert.Equal("Duplicate entry 'abc' for key 'PRIMARY'.", response.Message);
+  }
+
   private static ApiExceptionHandlingMiddleware CreateMiddleware(RequestDelegate next)
   {
-    return new ApiExceptionHandlingMiddleware(next, NullLogger<ApiExceptionHandlingMiddleware>.Instance);
+    return new ApiExceptionHandlingMiddleware(
+        next,
+        NullLogger<ApiExceptionHandlingMiddleware>.Instance,
+        new TestHostEnvironment());
   }
 
   private static DefaultHttpContext CreateContext()
@@ -83,5 +107,16 @@ public sealed class ApiExceptionHandlingMiddlewareTests
     return (await JsonSerializer.DeserializeAsync<ErrorResponse>(
         context.Response.Body,
         new JsonSerializerOptions(JsonSerializerDefaults.Web)))!;
+  }
+
+  private sealed class TestHostEnvironment : IHostEnvironment
+  {
+    public string EnvironmentName { get; set; } = Environments.Development;
+
+    public string ApplicationName { get; set; } = "Wms.Api.Tests";
+
+    public string ContentRootPath { get; set; } = AppContext.BaseDirectory;
+
+    public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
   }
 }

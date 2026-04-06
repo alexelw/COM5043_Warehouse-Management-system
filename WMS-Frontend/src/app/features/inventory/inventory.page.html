@@ -1,9 +1,5 @@
 <section class="page">
-  <app-page-header
-    eyebrow="Inventory"
-    title="Inventory"
-    description="This page now follows the backend permissions: Manager handles product setup, while Warehouse Staff handles stock visibility and adjustments."
-  >
+  <app-page-header eyebrow="Inventory" title="Inventory" description="Products, stock, and adjustments">
     <button
       actions
       class="button button--secondary"
@@ -131,10 +127,7 @@
         @if (isLoading()) {
           <app-loading-state label="Loading products..." />
         } @else if (!products().length) {
-          <app-empty-state
-            title="No products found"
-            description="Create the first product or widen the search filter."
-          />
+          <app-empty-state title="No products found" />
         } @else {
           <table class="table">
             <thead>
@@ -193,10 +186,7 @@
       @if (isLoading()) {
         <app-loading-state label="Checking low stock..." />
       } @else if (!lowStockProducts().length) {
-        <app-empty-state
-          title="Nothing needs reordering"
-          description="The current low-stock query returned no products at or below their threshold."
-        />
+        <app-empty-state title="Nothing needs reordering" />
       } @else {
         <table class="table">
           <thead>
@@ -253,10 +243,7 @@
         @if (isLoading()) {
           <app-loading-state label="Loading stock levels..." />
         } @else if (!stockLevels().length) {
-          <app-empty-state
-            title="No stock levels found"
-            description="Try another search or check whether the API has product data."
-          />
+          <app-empty-state title="No stock levels found" />
         } @else {
           <table class="table">
             <thead>
@@ -350,9 +337,6 @@
       </form>
     </section>
   } @else {
-    <app-empty-state
-      title="Inventory actions are role-specific"
-      description="Switch to Manager for product setup or Warehouse Staff for stock-level work."
-    />
+    <app-empty-state title="Inventory actions are role-specific" />
   }
 </section>

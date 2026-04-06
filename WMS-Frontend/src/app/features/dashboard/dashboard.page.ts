@@ -1,32 +1,33 @@
-import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { toApiErrorState } from '../../core/http/api-helpers';
 import { HealthResponse } from '../../core/models/api.types';
+import { UserRole } from '../../core/models/user-role.type';
 import { RoleService } from '../../core/services/role.service';
-import { EmptyStateComponent } from '../../shared/ui/empty-state/empty-state';
 import { ErrorBannerComponent } from '../../shared/ui/error-banner/error-banner';
 import { LoadingStateComponent } from '../../shared/ui/loading-state/loading-state';
 import { PageHeaderComponent } from '../../shared/ui/page-header/page-header';
-import { StatusBadgeComponent } from '../../shared/ui/status-badge/status-badge';
 import { DashboardApiService } from './data/dashboard.api';
 
 interface QuickLink {
   readonly title: string;
-  readonly description: string;
   readonly route: string;
+  readonly roleLabel: string;
+  readonly roles: readonly UserRole[];
+}
+
+interface DashboardAction {
   readonly label: string;
-  readonly tone: 'info' | 'success' | 'warning';
+  readonly route: string;
 }
 
 @Component({
   selector: 'app-dashboard-page',
   imports: [
     RouterLink,
-    EmptyStateComponent,
     ErrorBannerComponent,
     LoadingStateComponent,
     PageHeaderComponent,
-    StatusBadgeComponent,
   ],
   templateUrl: './dashboard.page.html',
   styleUrl: './dashboard.page.scss',
@@ -39,35 +40,50 @@ export class DashboardPage {
   protected readonly quickLinks: readonly QuickLink[] = [
     {
       title: 'Suppliers',
-      description: 'Manage supplier contact details and keep purchasing records tidy.',
       route: '/suppliers',
-      label: 'Manager flow',
-      tone: 'info',
+      roleLabel: 'Manager',
+      roles: ['Manager'],
     },
     {
       title: 'Inventory',
-      description: 'Review stock levels, spot shortages, and record stock adjustments.',
       route: '/inventory',
-      label: 'Warehouse flow',
-      tone: 'success',
+      roleLabel: 'Manager / Warehouse Staff',
+      roles: ['Manager', 'WarehouseStaff'],
+    },
+    {
+      title: 'Purchase Orders',
+      route: '/purchase-orders',
+      roleLabel: 'Manager / Warehouse Staff',
+      roles: ['Manager', 'WarehouseStaff'],
+    },
+    {
+      title: 'Customer Orders',
+      route: '/customer-orders',
+      roleLabel: 'Manager / Warehouse Staff',
+      roles: ['Manager', 'WarehouseStaff'],
     },
     {
       title: 'Finance',
-      description: 'Review transactions, generate summaries, and track report exports.',
       route: '/finance-reports',
-      label: 'Administrator flow',
-      tone: 'warning',
+      roleLabel: 'Administrator',
+      roles: ['Administrator'],
     },
   ];
 
   protected readonly selectedRole = this.roleService.selectedRole;
-  protected readonly foundationItems: readonly string[] = [
-    'Role selection is applied automatically to API requests.',
-    'Each feature page uses reactive forms with inline validation.',
-    'Tables and forms share consistent error, loading, and empty states.',
-    'Supplier, inventory, order, and finance routes are all available from one shell.',
-    'Frontend quality checks run through format, lint, build, and test scripts.',
-  ];
+  protected readonly visibleQuickLinks = computed(() =>
+    this.quickLinks.filter((item) => item.roles.includes(this.selectedRole())),
+  );
+  protected readonly primaryAction = computed<DashboardAction>(() => {
+    switch (this.selectedRole()) {
+      case 'WarehouseStaff':
+        return { label: 'Purchase Orders', route: '/purchase-orders' };
+      case 'Administrator':
+        return { label: 'Finance', route: '/finance-reports' };
+      default:
+        return { label: 'Suppliers', route: '/suppliers' };
+    }
+  });
 
   protected readonly roleHighlights: Record<string, readonly string[]> = {
     Manager: [
@@ -77,6 +93,7 @@ export class DashboardPage {
     ],
     WarehouseStaff: [
       'Review live stock levels.',
+      'Receive purchase-order deliveries.',
       'Record stock adjustments.',
       'Create and cancel customer orders.',
     ],

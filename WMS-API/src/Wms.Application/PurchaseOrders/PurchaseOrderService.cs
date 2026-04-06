@@ -180,8 +180,9 @@ public sealed class PurchaseOrderService : IPurchaseOrderService
         receivedAt);
     postedExpense.MarkPosted();
 
-    await _purchaseOrderRepository.UpdateAsync(purchaseOrder, cancellationToken);
+    // Explicitly add the receipt graph so EF persists the new receipt and lines as inserts.
     await _goodsReceiptRepository.AddAsync(goodsReceipt, cancellationToken);
+    await _purchaseOrderRepository.UpdateAsync(purchaseOrder, cancellationToken);
 
     foreach (var product in products.Values)
     {
@@ -202,14 +203,16 @@ public sealed class PurchaseOrderService : IPurchaseOrderService
       DateTime? to = null,
       CancellationToken cancellationToken = default)
   {
-    _ = await GetPurchaseOrderEntityAsync(purchaseOrderId, cancellationToken);
+    var purchaseOrder = await GetPurchaseOrderEntityAsync(purchaseOrderId, cancellationToken);
+    var receivedWithin = ApplicationMapping.ToDateRange(from, to);
 
-    var receipts = await _goodsReceiptRepository.ListByPurchaseOrderAsync(
-        purchaseOrderId,
-        ApplicationMapping.ToDateRange(from, to),
-        cancellationToken);
+    var receipts = purchaseOrder.Receipts
+        .Where(receipt => receivedWithin is null || receivedWithin.Contains(receipt.ReceivedAt))
+        .OrderByDescending(receipt => receipt.ReceivedAt)
+        .Select(receipt => receipt.ToResult())
+        .ToArray();
 
-    return receipts.Select(receipt => receipt.ToResult()).ToArray();
+    return receipts;
   }
 
   private async Task<PurchaseOrder> GetPurchaseOrderEntityAsync(

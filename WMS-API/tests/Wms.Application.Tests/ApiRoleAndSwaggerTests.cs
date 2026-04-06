@@ -23,6 +23,8 @@ using Wms.Application.Suppliers;
 using Wms.Contracts.Common;
 using Wms.Contracts.Finance;
 using Wms.Contracts.Inventory;
+using Wms.Contracts.Orders;
+using Wms.Contracts.PurchaseOrders;
 using Wms.Contracts.Reporting;
 using Wms.Contracts.Suppliers;
 using Wms.Contracts.System;
@@ -231,6 +233,95 @@ public sealed class ApiRoleAndSwaggerTests
     Assert.Equal(supplierId, product.SupplierId);
     Assert.Equal(0, product.QuantityOnHand);
     Assert.Equal(4.50m, product.UnitCost.Amount);
+  }
+
+  [Fact]
+  public async Task CustomerOrdersOpenEndpoint_WhenWarehouseRoleAllowed_ReturnsOnlyActiveOrders()
+  {
+    await using var host = await TestApiHost.StartAsync();
+
+    using var request = CreateRoleRequest(
+        HttpMethod.Get,
+        "/api/customer-orders/open?sort=createdAt&order=desc&page=1&pageSize=10",
+        UserRole.WarehouseStaff);
+
+    using var response = await host.Client.SendAsync(request);
+    var orders = await ReadRequiredJsonAsync<IReadOnlyList<CustomerOrderResponse>>(response);
+
+    Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    Assert.NotNull(orders);
+    Assert.All(orders!, order => Assert.Contains(order.Status, [nameof(CustomerOrderStatus.Draft), nameof(CustomerOrderStatus.Confirmed)]));
+    Assert.DoesNotContain(orders!, order => order.Status == nameof(CustomerOrderStatus.Cancelled));
+  }
+
+  [Fact]
+  public async Task CustomerOrderEndpoint_WhenWarehouseRoleAllowed_ReturnsOrderDetails()
+  {
+    await using var host = await TestApiHost.StartAsync();
+
+    var customerOrderId = Guid.NewGuid();
+    using var request = CreateRoleRequest(
+        HttpMethod.Get,
+        $"/api/customer-orders/{customerOrderId}",
+        UserRole.WarehouseStaff);
+
+    using var response = await host.Client.SendAsync(request);
+    var order = await ReadRequiredJsonAsync<CustomerOrderResponse>(response);
+
+    Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    Assert.NotNull(order);
+    Assert.Equal(customerOrderId, order!.CustomerOrderId);
+    Assert.Equal(nameof(CustomerOrderStatus.Confirmed), order.Status);
+  }
+
+  [Fact]
+  public async Task PurchaseOrdersOpenEndpoint_WhenWarehouseRoleAllowed_ReturnsOnlyReceivableOrders()
+  {
+    await using var host = await TestApiHost.StartAsync();
+
+    using var request = CreateRoleRequest(
+        HttpMethod.Get,
+        "/api/purchase-orders/open?sort=createdAt&order=desc&page=1&pageSize=10",
+        UserRole.WarehouseStaff);
+
+    using var response = await host.Client.SendAsync(request);
+    var orders = await ReadRequiredJsonAsync<IReadOnlyList<PurchaseOrderResponse>>(response);
+
+    Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    Assert.NotNull(orders);
+    Assert.All(orders!, order => Assert.Contains(order.Status, [nameof(PurchaseOrderStatus.Pending), nameof(PurchaseOrderStatus.PartiallyReceived)]));
+    Assert.DoesNotContain(orders!, order => order.Status == nameof(PurchaseOrderStatus.Completed));
+  }
+
+  [Fact]
+  public async Task PurchaseOrderReceiptWorkflowEndpoints_WhenWarehouseRoleAllowed_ReturnOrderAndReceipts()
+  {
+    await using var host = await TestApiHost.StartAsync();
+
+    var purchaseOrderId = Guid.NewGuid();
+    using var orderRequest = CreateRoleRequest(
+        HttpMethod.Get,
+        $"/api/purchase-orders/{purchaseOrderId}",
+        UserRole.WarehouseStaff);
+
+    using var orderResponse = await host.Client.SendAsync(orderRequest);
+    var order = await ReadRequiredJsonAsync<PurchaseOrderResponse>(orderResponse);
+
+    Assert.Equal(HttpStatusCode.OK, orderResponse.StatusCode);
+    Assert.NotNull(order);
+    Assert.Equal(purchaseOrderId, order!.PurchaseOrderId);
+
+    using var receiptsRequest = CreateRoleRequest(
+        HttpMethod.Get,
+        $"/api/purchase-orders/{purchaseOrderId}/receipts",
+        UserRole.WarehouseStaff);
+
+    using var receiptsResponse = await host.Client.SendAsync(receiptsRequest);
+    var receipts = await ReadRequiredJsonAsync<IReadOnlyList<GoodsReceiptResponse>>(receiptsResponse);
+
+    Assert.Equal(HttpStatusCode.OK, receiptsResponse.StatusCode);
+    var receipt = Assert.Single(receipts!);
+    Assert.Equal(purchaseOrderId, receipt.PurchaseOrderId);
   }
 
   [Fact]
@@ -626,6 +717,14 @@ public sealed class ApiRoleAndSwaggerTests
 
   private sealed class StubPurchaseOrderService : IPurchaseOrderService
   {
+    private static readonly Guid DefaultSupplierId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    private static readonly Guid DefaultProductId = Guid.Parse("22222222-2222-2222-2222-222222222222");
+    private static readonly PurchaseOrderLineResult DefaultLine = new(
+        DefaultProductId,
+        4,
+        new MoneyModel(12.50m, "GBP"));
+    private static readonly GoodsReceiptLineResult DefaultReceiptLine = new(DefaultProductId, 2);
+
     public Task<PurchaseOrderResult> CreatePurchaseOrderAsync(
         Wms.Application.PurchaseOrders.CreatePurchaseOrderRequest request,
         CancellationToken cancellationToken = default)
@@ -640,17 +739,31 @@ public sealed class ApiRoleAndSwaggerTests
         DateTime? to = null,
         CancellationToken cancellationToken = default)
     {
-      throw new NotSupportedException();
+      IReadOnlyList<PurchaseOrderResult> orders =
+      [
+        CreatePurchaseOrderResult(Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"), PurchaseOrderStatus.Pending, new DateTime(2026, 4, 4, 9, 0, 0, DateTimeKind.Utc)),
+        CreatePurchaseOrderResult(Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"), PurchaseOrderStatus.PartiallyReceived, new DateTime(2026, 4, 3, 10, 0, 0, DateTimeKind.Utc)),
+        CreatePurchaseOrderResult(Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc"), PurchaseOrderStatus.Completed, new DateTime(2026, 4, 2, 11, 0, 0, DateTimeKind.Utc)),
+      ];
+
+      var filtered = orders.Where(order =>
+          (!supplierId.HasValue || order.SupplierId == supplierId.Value) &&
+          (!status.HasValue || order.Status == status.Value));
+
+      return Task.FromResult<IReadOnlyList<PurchaseOrderResult>>(filtered.ToArray());
     }
 
     public Task<PurchaseOrderResult> GetPurchaseOrderAsync(Guid purchaseOrderId, CancellationToken cancellationToken = default)
     {
-      throw new NotSupportedException();
+      return Task.FromResult(CreatePurchaseOrderResult(
+          purchaseOrderId,
+          PurchaseOrderStatus.Pending,
+          new DateTime(2026, 4, 4, 9, 0, 0, DateTimeKind.Utc)));
     }
 
     public Task<PurchaseOrderResult> CancelPurchaseOrderAsync(
         Guid purchaseOrderId,
-        CancelPurchaseOrderRequest request,
+        Wms.Application.PurchaseOrders.CancelPurchaseOrderRequest request,
         CancellationToken cancellationToken = default)
     {
       throw new NotSupportedException();
@@ -670,7 +783,28 @@ public sealed class ApiRoleAndSwaggerTests
         DateTime? to = null,
         CancellationToken cancellationToken = default)
     {
-      throw new NotSupportedException();
+      return Task.FromResult<IReadOnlyList<GoodsReceiptResult>>(
+      [
+        new GoodsReceiptResult(
+            Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd"),
+            purchaseOrderId,
+            new DateTime(2026, 4, 5, 8, 30, 0, DateTimeKind.Utc),
+            [DefaultReceiptLine]),
+      ]);
+    }
+
+    private static PurchaseOrderResult CreatePurchaseOrderResult(
+        Guid purchaseOrderId,
+        PurchaseOrderStatus status,
+        DateTime createdAt)
+    {
+      return new PurchaseOrderResult(
+          purchaseOrderId,
+          DefaultSupplierId,
+          status,
+          createdAt,
+          [DefaultLine],
+          new MoneyModel(50.00m, "GBP"));
     }
   }
 
@@ -690,12 +824,25 @@ public sealed class ApiRoleAndSwaggerTests
         DateTime? to = null,
         CancellationToken cancellationToken = default)
     {
-      throw new NotSupportedException();
+      IReadOnlyList<CustomerOrderResult> orders =
+      [
+        CreateCustomerOrderResult(Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"), CustomerOrderStatus.Confirmed, new DateTime(2026, 4, 4, 14, 0, 0, DateTimeKind.Utc)),
+        CreateCustomerOrderResult(Guid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff"), CustomerOrderStatus.Cancelled, new DateTime(2026, 4, 1, 14, 0, 0, DateTimeKind.Utc)),
+      ];
+
+      var filtered = orders.Where(order =>
+          (!customerId.HasValue || order.CustomerId == customerId.Value) &&
+          (!status.HasValue || order.Status == status.Value));
+
+      return Task.FromResult<IReadOnlyList<CustomerOrderResult>>(filtered.ToArray());
     }
 
     public Task<CustomerOrderResult> GetCustomerOrderAsync(Guid customerOrderId, CancellationToken cancellationToken = default)
     {
-      throw new NotSupportedException();
+      return Task.FromResult(CreateCustomerOrderResult(
+          customerOrderId,
+          CustomerOrderStatus.Confirmed,
+          new DateTime(2026, 4, 4, 14, 0, 0, DateTimeKind.Utc)));
     }
 
     public Task<CustomerOrderResult> CancelCustomerOrderAsync(
@@ -704,6 +851,20 @@ public sealed class ApiRoleAndSwaggerTests
         CancellationToken cancellationToken = default)
     {
       throw new NotSupportedException();
+    }
+
+    private static CustomerOrderResult CreateCustomerOrderResult(
+        Guid customerOrderId,
+        CustomerOrderStatus status,
+        DateTime createdAt)
+    {
+      return new CustomerOrderResult(
+          customerOrderId,
+          Guid.Parse("99999999-9999-9999-9999-999999999999"),
+          status,
+          createdAt,
+          [new CustomerOrderLineResult(Guid.Parse("88888888-8888-8888-8888-888888888888"), 3, new MoneyModel(8.00m, "GBP"))],
+          new MoneyModel(24.00m, "GBP"));
     }
   }
 

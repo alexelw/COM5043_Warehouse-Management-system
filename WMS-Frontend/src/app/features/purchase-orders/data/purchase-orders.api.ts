@@ -42,6 +42,16 @@ export class PurchaseOrdersApiService {
     });
   }
 
+  getOpenPurchaseOrders(query: ReceiptQuery = {}): Observable<readonly PurchaseOrderResponse[]> {
+    return this.http.get<readonly PurchaseOrderResponse[]>('/api/purchase-orders/open', {
+      params: buildHttpParams(query),
+    });
+  }
+
+  getPurchaseOrder(purchaseOrderId: string): Observable<PurchaseOrderResponse> {
+    return this.http.get<PurchaseOrderResponse>(`/api/purchase-orders/${purchaseOrderId}`);
+  }
+
   createPurchaseOrder(request: CreatePurchaseOrderRequest): Observable<PurchaseOrderResponse> {
     return this.http.post<PurchaseOrderResponse>('/api/purchase-orders', request);
   }

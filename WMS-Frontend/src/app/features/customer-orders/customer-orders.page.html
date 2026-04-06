@@ -1,9 +1,5 @@
 <section class="page">
-  <app-page-header
-    eyebrow="Orders"
-    title="Customer orders"
-    description="This page now respects the API split: Warehouse Staff can create and cancel orders, while Manager can review order history."
-  >
+  <app-page-header eyebrow="Orders" title="Customer orders" description="Sales orders">
     <button
       actions
       class="button"
@@ -28,10 +24,33 @@
 
         <app-error-banner [error]="createError()" title="Could not create customer order" />
 
+        <div class="callout">
+          Create a confirmed customer order from current stock. Optional contact details can be left
+          blank.
+        </div>
+
+        @if (lastCreatedCustomerOrder()) {
+          <div class="callout">
+            Latest customer order ID:
+            <strong>{{ lastCreatedCustomerOrder()!.customerOrderId }}</strong>
+          </div>
+        }
+
         <div class="form-grid">
           <label class="field">
             <span>Customer name</span>
             <input formControlName="customerName" placeholder="Ainsley Tools" />
+            @if (showCustomerFieldError('customerName')) {
+              @for (message of customerFieldErrors('customerName'); track message) {
+                <p class="field-error">{{ message }}</p>
+              }
+            }
+            @for (
+              message of createServerErrors('Customer.Name', 'customer.name', 'Name', 'customerName');
+              track message
+            ) {
+              <p class="field-error">{{ message }}</p>
+            }
           </label>
 
           <label class="field">
@@ -41,13 +60,41 @@
               type="email"
               placeholder="orders@ainsley.example"
             />
+            @if (showCustomerFieldError('customerEmail')) {
+              @for (message of customerFieldErrors('customerEmail'); track message) {
+                <p class="field-error">{{ message }}</p>
+              }
+            }
+            @for (
+              message of createServerErrors('Customer.Email', 'customer.email', 'Email', 'customerEmail');
+              track message
+            ) {
+              <p class="field-error">{{ message }}</p>
+            }
           </label>
 
           <label class="field">
             <span>Phone</span>
             <input formControlName="customerPhone" type="tel" placeholder="0161 555 0190" />
+            @if (showCustomerFieldError('customerPhone')) {
+              @for (message of customerFieldErrors('customerPhone'); track message) {
+                <p class="field-error">{{ message }}</p>
+              }
+            }
+            @for (
+              message of createServerErrors('Customer.Phone', 'customer.phone', 'Phone', 'customerPhone');
+              track message
+            ) {
+              <p class="field-error">{{ message }}</p>
+            }
           </label>
         </div>
+
+        @if (!hasAvailableStock()) {
+          <p class="form-error">
+            No stock is currently available to create a customer order.
+          </p>
+        }
 
         <div formArrayName="lines" class="stack">
           @for (line of orderLines.controls; track $index) {
@@ -70,14 +117,19 @@
               <div class="form-grid">
                 <label class="field">
                   <span>Product</span>
-                  <select formControlName="productId">
-                    <option value="">Select a product</option>
-                    @for (stockLevel of stockLevels(); track stockLevel.productId) {
+                  <select formControlName="productId" [disabled]="!hasAvailableStock()">
+                    <option value="">
+                      {{ hasAvailableStock() ? 'Select a product' : 'No stock available' }}
+                    </option>
+                    @for (stockLevel of availableStockLevels(); track stockLevel.productId) {
                       <option [value]="stockLevel.productId">
-                        {{ stockLevel.name }} ({{ stockLevel.sku }})
+                        {{ stockLevelLabel(stockLevel) }}
                       </option>
                     }
                   </select>
+                  @if (!hasAvailableStock()) {
+                    <p class="field-hint">Only products with stock on hand can be added.</p>
+                  }
                   @if (showLineError($index, 'productId')) {
                     @for (message of lineErrors($index, 'productId'); track message) {
                       <p class="field-error">{{ message }}</p>
@@ -88,6 +140,9 @@
                 <label class="field">
                   <span>Quantity</span>
                   <input formControlName="quantity" type="number" min="1" step="1" />
+                  @if (availableStockForLine($index); as availableStock) {
+                    <p class="field-hint">Available now: {{ availableStock }}</p>
+                  }
                   @if (showLineError($index, 'quantity')) {
                     @for (message of lineErrors($index, 'quantity'); track message) {
                       <p class="field-error">{{ message }}</p>
@@ -117,7 +172,9 @@
           <button class="button button--ghost" type="button" (click)="addOrderLine()">
             Add line
           </button>
-          <button class="button" type="submit" [disabled]="isCreating()">Submit order</button>
+          <button class="button" type="submit" [disabled]="isCreating() || !hasAvailableStock()">
+            Submit order
+          </button>
         </div>
       </form>
 
@@ -130,11 +187,18 @@
         <h2>Cancel by order ID</h2>
 
         <app-error-banner [error]="cancelError()" title="Could not cancel customer order" />
+        <app-error-banner [error]="cancelLookupError()" title="Could not load customer order" />
 
         <div class="callout">
-          Warehouse Staff can cancel orders, but the current API does not expose an order history
-          list for this role. Enter the order ID from your workflow context.
+          Load the order to preview it first, or cancel directly by order ID if you already know it.
         </div>
+
+        @if (lastCreatedCustomerOrder()) {
+          <div class="callout">
+            Latest order from this session:
+            <strong>{{ lastCreatedCustomerOrder()!.customerOrderId }}</strong>
+          </div>
+        }
 
         <div class="form-grid">
           <label class="field">
@@ -147,7 +211,55 @@
               <p class="field-error">{{ message }}</p>
             }
           </label>
+        </div>
 
+        <div class="panel-actions">
+          <button class="button button--ghost" type="button" (click)="loadCustomerOrderForCancel()">
+            Load order
+          </button>
+          @if (lastCreatedCustomerOrder()) {
+            <button class="button button--ghost" type="button" (click)="useLastCreatedOrder()">
+              Use latest order
+            </button>
+          }
+        </div>
+
+        @if (isLoadingCancelOrder()) {
+          <app-loading-state label="Loading customer order..." />
+        } @else if (selectedCancelOrder()) {
+          <div class="split-card">
+            <div class="summary-card">
+              <span class="supporting-text">Status</span>
+              <strong class="summary-card__value">{{ selectedCancelOrder()!.status }}</strong>
+            </div>
+
+            <div class="summary-card">
+              <span class="supporting-text">Total</span>
+              <strong class="summary-card__value">
+                {{ formatTotal(selectedCancelOrder()!) }}
+              </strong>
+            </div>
+          </div>
+
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Quantity</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (line of selectedCancelOrder()!.lines; track line.productId) {
+                <tr>
+                  <td>{{ customerOrderLineLabel(line.productId) }}</td>
+                  <td>{{ line.quantity }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+
+        <div class="form-grid">
           <label class="field">
             <span>Reason</span>
             <textarea
@@ -161,12 +273,67 @@
         </div>
 
         <div class="panel-actions">
-          <button class="button button--secondary" type="submit" [disabled]="isCancelling()">
+          <button
+            class="button button--secondary"
+            type="submit"
+            [disabled]="isCancelling() || !canCancelSelectedOrder()"
+          >
             Cancel order
           </button>
         </div>
       </form>
     </section>
+
+    <article class="surface panel-card stack">
+      <p class="eyebrow">Active orders</p>
+      <h2>Customer orders available for cancellation</h2>
+
+      <div class="callout">
+        Warehouse staff can select an active order here, load it into the cancel panel, and then
+        provide the cancellation reason.
+      </div>
+
+      @if (isLoading()) {
+        <app-loading-state label="Loading active customer orders..." />
+      } @else if (!hasActiveCustomerOrders()) {
+        <app-empty-state title="No active customer orders found" />
+      } @else {
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Created</th>
+              <th>Lines</th>
+              <th>Total</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (order of activeCustomerOrders(); track order.customerOrderId) {
+              <tr>
+                <td class="cell-wrap">{{ order.customerOrderId }}</td>
+                <td>{{ formatCreatedAt(order.createdAt) }}</td>
+                <td>{{ order.lines.length }}</td>
+                <td>{{ formatTotal(order) }}</td>
+                <td>
+                  <app-status-badge [label]="order.status" [tone]="statusTone(order.status)" />
+                </td>
+                <td>
+                  <button
+                    class="button button--ghost"
+                    type="button"
+                    (click)="useCustomerOrderForCancel(order)"
+                  >
+                    Use in form
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </article>
   } @else if (isManager()) {
     <section class="surface panel-card stack">
       <div class="toolbar">
@@ -215,14 +382,11 @@
       <p class="eyebrow">Recent orders</p>
       <h2>Customer order list</h2>
 
-      @if (isLoading()) {
-        <app-loading-state label="Loading customer orders..." />
-      } @else if (!customerOrders().length) {
-        <app-empty-state
-          title="No customer orders found"
-          description="Try broader filters or wait for Warehouse Staff to create the first order."
-        />
-      } @else {
+        @if (isLoading()) {
+          <app-loading-state label="Loading customer orders..." />
+        } @else if (!customerOrders().length) {
+          <app-empty-state title="No customer orders found" />
+        } @else {
         <table class="table">
           <thead>
             <tr>
@@ -236,7 +400,7 @@
           <tbody>
             @for (order of customerOrders(); track order.customerOrderId) {
               <tr>
-                <td>{{ order.customerOrderId }}</td>
+                <td class="cell-wrap">{{ order.customerOrderId }}</td>
                 <td>{{ formatCreatedAt(order.createdAt) }}</td>
                 <td>{{ order.lines.length }}</td>
                 <td>{{ formatTotal(order) }}</td>
@@ -250,9 +414,6 @@
       }
     </article>
   } @else {
-    <app-empty-state
-      title="Customer order actions are role-specific"
-      description="Switch to Warehouse Staff to create or cancel orders, or to Manager to review order history."
-    />
+    <app-empty-state title="Customer order actions are role-specific" />
   }
 </section>
